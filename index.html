@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- ===== SECURITY HEADERS (applied via meta-equivalent for SPA) ===== -->
+    <!-- Note: Hostinger server CSP header takes precedence over this meta tag.
+         If fonts/images fail to load, update the CSP in Hostinger hPanel (Security → CSP)
+         to add: style-src fonts.googleapis.com; font-src fonts.gstatic.com; img-src images.pexels.com -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https://images.pexels.com https://*.pexels.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://alaya-insider-api-production.up.railway.app; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()" />
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin" />
+
+    <title>ALAYA INSIDER — Premium Editorial Shopping</title>
+    <meta
+      name="description"
+      content="ALAYA INSIDER is a premium editorial shopping platform — curated luxury beauty, leather goods, fine jewelry, fragrance and digital style guides, shipped worldwide."
+    />
+    <meta name="theme-color" content="#f7f4ef" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14110d" media="(prefers-color-scheme: dark)" />
+    <meta name="author" content="ALAYA INSIDER" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ALAYA INSIDER" />
+    <meta property="og:title" content="ALAYA INSIDER — Premium Editorial Shopping" />
+    <meta
+      property="og:description"
+      content="Curated luxury beauty, bags, jewelry, fragrance and digital style guides. Shipped worldwide."
+    />
+    <meta property="og:image" content="https://images.pexels.com/photos/33401555/pexels-photo-33401555.jpeg?auto=compress&cs=tinysrgb&w=1200" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ALAYA INSIDER — Premium Editorial Shopping" />
+    <meta
+      name="twitter:description"
+      content="Curated luxury beauty, bags, jewelry, fragrance and digital style guides."
+    />
+    <meta name="twitter:image" content="https://images.pexels.com/photos/33401555/pexels-photo-33401555.jpeg?auto=compress&cs=tinysrgb&w=1200" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ALAYA" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="ALAYA INSIDER" />
+    <meta name="msapplication-TileColor" content="#f7f4ef" />
+    <meta name="msapplication-TileImage" content="/icons/icon-192.svg" />
+
+    <!-- iOS splash screen -->
+    <link rel="apple-touch-startup-image" href="/screenshots/home-mobile.svg" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" />
+
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem("alaya_theme");
+          var t = raw ? JSON.parse(raw) : null;
+          if (t === "dark") document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- Runtime API Configuration (set at deploy time to point to your backend) -->
+    <script>
+      window.__ALAYA_CONFIG__ = window.__ALAYA_CONFIG__ || (() => {
+        // Build-time env vars take precedence over this default.
+        // In production, replace this block or set env vars at build time.
+        try {
+          // Check for a Vite-defined API URL from the backend server
+          if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
+            return { apiUrl: import.meta.env.VITE_API_URL, localStorageFallback: true };
+          }
+        } catch (e) {
+          // import.meta not available (static file), fall through
+        }
+        return {
+          apiUrl: "http://localhost:3001",
+          localStorageFallback: true
+        };
+      })();
+    </script>
+
+    <!-- Service worker registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/service-worker.js', {
+            scope: '/',
+            updateViaCache: 'none'
+          }).then(function (reg) {
+            reg.addEventListener('updatefound', function () {
+              var installing = reg.installing;
+              if (installing) {
+                installing.addEventListener('statechange', function () {
+                  // SW lifecycle handled silently in production
+                });
+              }
+            });
+          }).catch(function () {
+            // Service worker registration failed — offline features degraded
+          });
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>ALAYA INSIDER requires JavaScript to deliver its full shopping experience.</noscript>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

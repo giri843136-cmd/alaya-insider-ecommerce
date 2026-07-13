@@ -1,0 +1,99 @@
+# ==================================================================
+# ALAYA INSIDER — Enterprise .gitignore
+# ==================================================================
+
+# ---- Dependencies ----
+node_modules/
+.pnp
+.pnp.js
+
+# ---- Build output ----
+dist/
+build/
+*.tsbuildinfo
+server/dist/
+server/build/
+
+# ---- Environment & Secrets ----
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+.env.*
+*.pem
+*.key
+*.cert
+*.p12
+*.pfx
+*.jks
+secrets/
+
+# ---- IDE & Editor ----
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-*
+*.orig
+
+# ---- OS ----
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ---- Logs & Debug ----
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+pnpm-debug.log*
+lerna-debug.log*
+
+# ---- Cache & Temp ----
+.eslintcache
+.stylelintcache
+.cache/
+.turbo/
+.next/
+.temp/
+tmp/
+*.tmp
+
+# ---- Coverage ----
+coverage/
+.nyc_output/
+
+# ---- TypeScript ----
+*.tsbuildinfo
+
+# ---- Generated assets ----
+public/icons/*.svg
+public/screenshots/*.svg
+
+# ---- Database ----
+server/data/
+*.sqlite
+*.db
+
+# ---- Docker ----
+.dockerignore
+
+# ---- Testing ----
+__screenshots__/
+*.snap
+*-report*
+
+# ---- Security & Audit ----
+.snyk
+.sbom/
+
+# ---- Server-specific ----
+# NOTE: server/public/ SPA assets are committed so Railway can serve them
+# without a separate frontend build step in the deployment pipeline.
+# To switch to CI-built assets, add a postbuild script that copies dist/ to server/public/

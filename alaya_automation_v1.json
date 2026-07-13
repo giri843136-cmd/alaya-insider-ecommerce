@@ -1,0 +1,235 @@
+[
+  {
+    "id": "auto_4140_gf1qqe",
+    "name": "Order Received → Notify Supplier",
+    "description": "When a new order is placed, automatically notify the supplier via email",
+    "trigger": "order_received",
+    "enabled": true,
+    "actions": [
+      "send_email",
+      "create_purchase_order"
+    ],
+    "createdAt": 1775642298666
+  },
+  {
+    "id": "auto_4141_zxl0v6",
+    "name": "Payment Confirmed → Update Inventory",
+    "description": "Deduct inventory when payment is confirmed",
+    "trigger": "order_paid",
+    "enabled": true,
+    "actions": [
+      "update_inventory",
+      "update_order_status"
+    ],
+    "createdAt": 1776074298666
+  },
+  {
+    "id": "auto_4142_ukwaod",
+    "name": "Supplier Ships → Notify Customer",
+    "description": "Send tracking number to customer when supplier ships",
+    "trigger": "order_shipped",
+    "enabled": true,
+    "actions": [
+      "send_email",
+      "update_tracking"
+    ],
+    "createdAt": 1776506298666
+  },
+  {
+    "id": "auto_4143_fn8cck",
+    "name": "Low Stock Alert → Admin",
+    "description": "Notify admin when stock falls below threshold",
+    "trigger": "stock_low",
+    "enabled": true,
+    "actions": [
+      "notify_admin"
+    ],
+    "createdAt": 1776938298666
+  },
+  {
+    "id": "auto_4144_53ha41",
+    "name": "Return Requested → Create Task",
+    "description": "Create a support task when a return is requested",
+    "trigger": "return_requested",
+    "enabled": false,
+    "actions": [
+      "create_task",
+      "notify_admin"
+    ],
+    "createdAt": 1777370298666
+  },
+  {
+    "id": "auto_4145_1chn4q",
+    "name": "Order Confirmed → Update Finance",
+    "description": "Record revenue when order is confirmed",
+    "trigger": "order_confirmed",
+    "enabled": true,
+    "actions": [
+      "charge_payment",
+      "notify_admin"
+    ],
+    "createdAt": 1777802298666
+  },
+  {
+    "id": "auto_4146_n10vx4",
+    "name": "Supplier Confirmed → Update PO",
+    "description": "Mark purchase order as confirmed",
+    "trigger": "supplier_confirmed",
+    "enabled": true,
+    "actions": [
+      "update_supplier",
+      "send_email"
+    ],
+    "createdAt": 1778234298666
+  },
+  {
+    "id": "auto_4147_cpl520",
+    "name": "Stock Out → Alert Warehouse",
+    "description": "Alert warehouse when product goes out of stock",
+    "trigger": "stock_out",
+    "enabled": true,
+    "actions": [
+      "notify_admin",
+      "create_task"
+    ],
+    "createdAt": 1778666298666
+  },
+  {
+    "id": "auto_4148_ms86md",
+    "name": "Order Delivered → Request Review",
+    "description": "Send review request after delivery",
+    "trigger": "order_delivered",
+    "enabled": true,
+    "actions": [
+      "send_email"
+    ],
+    "createdAt": 1779098298666
+  },
+  {
+    "id": "auto_4149_zga36f",
+    "name": "New Customer → Welcome Series",
+    "description": "Send welcome email sequence to new customers",
+    "trigger": "customer_created",
+    "enabled": true,
+    "actions": [
+      "send_email",
+      "create_task"
+    ],
+    "createdAt": 1779530298666
+  },
+  {
+    "id": "auto_4150_l4g34f",
+    "name": "Weekly Inventory Report",
+    "description": "Send weekly inventory summary to admin",
+    "trigger": "schedule",
+    "enabled": true,
+    "actions": [
+      "notify_admin"
+    ],
+    "createdAt": 1779962298666
+  },
+  {
+    "id": "auto_4151_rdo7im",
+    "name": "Refund Processed → Update Analytics",
+    "description": "Record refund in analytics",
+    "trigger": "order_paid",
+    "enabled": true,
+    "actions": [
+      "update_order_status",
+      "send_email"
+    ],
+    "createdAt": 1780394298666
+  },
+  {
+    "id": "auto_4152_n8b5na",
+    "name": "High-Value Order → Flag for Review",
+    "description": "Flag orders over $500 for manual review",
+    "trigger": "order_received",
+    "enabled": true,
+    "actions": [
+      "notify_admin"
+    ],
+    "createdAt": 1780826298666
+  },
+  {
+    "id": "auto_4153_2e7yiv",
+    "name": "Supplier Delay → Notify Customer",
+    "description": "Automatically notify customer if supplier reports delay",
+    "trigger": "supplier_confirmed",
+    "enabled": false,
+    "actions": [
+      "send_email",
+      "update_tracking"
+    ],
+    "createdAt": 1781258298666
+  },
+  {
+    "id": "auto_4154_wgv6fg",
+    "name": "Inventory Reorder → Create PO",
+    "description": "Automatically create purchase order for low stock items",
+    "trigger": "stock_low",
+    "enabled": true,
+    "actions": [
+      "create_purchase_order",
+      "send_email"
+    ],
+    "createdAt": 1781690298666
+  },
+  {
+    "id": "auto_4155_17qjxj",
+    "name": "Return Completed → Update Inventory",
+    "description": "Add returned items back to inventory",
+    "trigger": "return_requested",
+    "enabled": true,
+    "actions": [
+      "update_inventory"
+    ],
+    "createdAt": 1781863098666
+  },
+  {
+    "id": "auto_4156_ea0t9q",
+    "name": "Bulk Order → Notify Warehouse",
+    "description": "Notify warehouse for orders with 5+ items",
+    "trigger": "order_received",
+    "enabled": true,
+    "actions": [
+      "notify_admin",
+      "create_task"
+    ],
+    "createdAt": 1782122298666
+  },
+  {
+    "id": "auto_4157_r06d6z",
+    "name": "Abandoned Cart → Send Reminder",
+    "description": "Send email reminder for abandoned carts",
+    "trigger": "schedule",
+    "enabled": true,
+    "actions": [
+      "send_email"
+    ],
+    "createdAt": 1782554298666
+  },
+  {
+    "id": "auto_4158_edtyvs",
+    "name": "Monthly Performance Report",
+    "description": "Generate and send monthly performance report",
+    "trigger": "schedule",
+    "enabled": true,
+    "actions": [
+      "notify_admin",
+      "send_email"
+    ],
+    "createdAt": 1782986298666
+  },
+  {
+    "id": "auto_4159_ysl608",
+    "name": "Supplier Rating Update",
+    "description": "Update supplier ratings based on delivery performance",
+    "trigger": "order_delivered",
+    "enabled": false,
+    "actions": [
+      "update_supplier"
+    ],
+    "createdAt": 1783245498666
+  }
+]

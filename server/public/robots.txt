@@ -1,0 +1,10 @@
+# ALAYA INSIDER — Robots
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /checkout/
+
+# Sitemap (update domain for production)
+# Sitemap: https://alayainsider.com/sitemap.xml

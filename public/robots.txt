@@ -1,0 +1,9 @@
+# ALAYA INSIDER — Robots
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /auth/
+Disallow: /checkout/
+
+Sitemap: https://alayainsider.com/sitemap.xml

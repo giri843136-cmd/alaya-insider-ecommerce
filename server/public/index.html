@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- ===== SECURITY HEADERS ===== -->
+    <!-- CSP via meta tag covers most directives. frame-ancestors is not supported
+         in meta tags (only HTTP headers), so clickjacking protection is handled by
+         the backend's X-Frame-Options: SAMEORIGIN header (hono secureHeaders middleware). -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: https://images.pexels.com https://*.pexels.com; connect-src 'self' http://localhost:3001 ws://localhost:5173 https://fonts.googleapis.com https://fonts.gstatic.com https://*.up.railway.app https://*.railway.app https://alaya-insider-api-production.up.railway.app; object-src 'none'; base-uri 'self'; form-action 'self';" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <!-- X-Frame-Options is set as an HTTP header by the backend (hono secureHeaders middleware).
+         Meta-tag equivalent is not supported by browsers — removed to avoid console warning. -->
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="Permissions-Policy" content="camera=(), microphone=(), geolocation=(), interest-cohort=()" />
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin" />
+
+    <title>ALAYA INSIDER — Premium Editorial Shopping</title>
+    <meta
+      name="description"
+      content="ALAYA INSIDER is a premium editorial shopping platform — curated luxury beauty, leather goods, fine jewelry, fragrance and digital style guides, shipped worldwide."
+    />
+    <meta name="theme-color" content="#f7f4ef" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#14110d" media="(prefers-color-scheme: dark)" />
+    <meta name="author" content="ALAYA INSIDER" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ALAYA INSIDER" />
+    <meta property="og:title" content="ALAYA INSIDER — Premium Editorial Shopping" />
+    <meta
+      property="og:description"
+      content="Curated luxury beauty, bags, jewelry, fragrance and digital style guides. Shipped worldwide."
+    />
+    <meta property="og:image" content="https://images.pexels.com/photos/33401555/pexels-photo-33401555.jpeg?auto=compress&cs=tinysrgb&w=1200" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ALAYA INSIDER — Premium Editorial Shopping" />
+    <meta
+      name="twitter:description"
+      content="Curated luxury beauty, bags, jewelry, fragrance and digital style guides."
+    />
+    <meta name="twitter:image" content="https://images.pexels.com/photos/33401555/pexels-photo-33401555.jpeg?auto=compress&cs=tinysrgb&w=1200" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="manifest" href="/manifest.json" />
+    <!-- Favicon (inline SVG data URI for zero 404s) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ctext y='28' font-size='28'%3EA%3C/text%3E%3C/svg%3E" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="ALAYA" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="ALAYA INSIDER" />
+    <meta name="msapplication-TileColor" content="#f7f4ef" />
+    <meta name="msapplication-TileImage" content="/icons/icon-192.svg" />
+
+    <!-- iOS splash screen -->
+    <link rel="apple-touch-startup-image" href="/screenshots/home-mobile.svg" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)" />
+
+    <script>
+      (function () {
+        try {
+          var raw = localStorage.getItem("alaya_theme");
+          var t = raw ? JSON.parse(raw) : null;
+          if (t === "dark") document.documentElement.classList.add("dark");
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- Runtime API Configuration — Auto-detects dev vs production environment -->
+    <script>
+      window.__ALAYA_CONFIG__ = window.__ALAYA_CONFIG__ || (() => {
+        // Auto-detect: if running on localhost, use local backend
+        var host = window.location.hostname;
+        var isLocal = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+        if (isLocal) {
+          return { apiUrl: "http://localhost:3001/api/v1", localStorageFallback: true };
+        }
+        // Production: use Railway backend
+        return {
+          apiUrl: "https://alaya-insider-api-production.up.railway.app/api/v1",
+          localStorageFallback: true
+        };
+      })();
+    </script>
+
+
+
+    <!-- Service worker registration + PWA install flow -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/service-worker.js', {
+            scope: '/',
+            updateViaCache: 'none'
+          }).catch(function () {
+            // Service worker registration failed — offline features degraded
+          });
+        });
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-B3SlglKy.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-other-9g8mz39e.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-DMubPx5q.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-icons-Dnb2ZSr1.js">
+    <link rel="modulepreload" crossorigin href="/assets/context-NcDKIbX9.js">
+    <link rel="modulepreload" crossorigin href="/assets/admin-pages-BKQ7Hk7a.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-C3ccHwmS.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <noscript>ALAYA INSIDER requires JavaScript to deliver its full shopping experience.</noscript>
+  </body>
+</html>

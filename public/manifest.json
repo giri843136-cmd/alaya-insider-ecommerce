@@ -1,0 +1,87 @@
+{
+  "name": "ALAYA INSIDER",
+  "short_name": "ALAYA",
+  "description": "Premium editorial shopping — curated beauty, leather goods, fine jewelry, fragrance and digital style guides.",
+  "start_url": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "dir": "ltr",
+  "theme_color": "#f7f4ef",
+  "background_color": "#f7f4ef",
+  "categories": ["shopping", "lifestyle", "fashion"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192-maskable.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512-maskable.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home-mobile.svg",
+      "sizes": "390x844",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "ALAYA INSIDER mobile home screen"
+    },
+    {
+      "src": "/screenshots/home-desktop.svg",
+      "sizes": "1280x800",
+      "type": "image/svg+xml",
+      "form_factor": "wide",
+      "label": "ALAYA INSIDER desktop home screen"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Shop",
+      "short_name": "Shop",
+      "description": "Browse all products",
+      "url": "/#/shop",
+      "icons": [{ "src": "/icons/shop-icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Cart",
+      "short_name": "Cart",
+      "description": "View your shopping bag",
+      "url": "/#/cart",
+      "icons": [{ "src": "/icons/cart-icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Wishlist",
+      "short_name": "Wishlist",
+      "description": "View your saved items",
+      "url": "/#/wishlist",
+      "icons": [{ "src": "/icons/wishlist-icon.svg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Account",
+      "short_name": "Account",
+      "description": "Your profile and orders",
+      "url": "/#/account",
+      "icons": [{ "src": "/icons/account-icon.svg", "sizes": "96x96" }]
+    }
+  ]
+}

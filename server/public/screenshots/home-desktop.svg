@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
+  <rect width="1280" height="800" fill="#f7f4ef"/>
+  <rect x="128" y="80" width="1024" height="640" rx="12" fill="white" stroke="#e7e0d4" stroke-width="1"/>
+  <circle cx="640" cy="200" r="64" fill="#9c7a4b"/>
+  <text x="640" y="336" text-anchor="middle" font-family="serif" font-size="40" font-weight="bold" fill="#211c15">ALAYA INSIDER</text>
+  <rect x="256" y="400" width="768" height="32" rx="4" fill="#e7e0d4"/>
+  <rect x="256" y="455.99999999999994" width="512" height="24" rx="3" fill="#e7e0d4"/>
+  <rect x="256" y="504" width="640" height="24" rx="3" fill="#e7e0d4"/>
+</svg>

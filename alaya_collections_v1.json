@@ -1,0 +1,267 @@
+[
+  {
+    "id": "spring-2026-collection",
+    "name": "Spring 2026 Collection",
+    "description": "Fresh florals, light textures, and vibrant colors for the new season.",
+    "image": "https://images.pexels.com/photos/965998/pexels-photo-965998.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_87_n64yl1",
+      "prod_98_tl9dz7",
+      "prod_33_hw32jk",
+      "prod_48_cv5lef"
+    ],
+    "productCount": 4,
+    "createdAt": 1781517498666
+  },
+  {
+    "id": "clean-beauty-edit",
+    "name": "Clean Beauty Edit",
+    "description": "Our curated selection of clean, conscious beauty essentials.",
+    "image": "https://images.pexels.com/photos/3945681/pexels-photo-3945681.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_744_srzcjn",
+      "prod_761_f1r6uz",
+      "prod_732_df6lkg"
+    ],
+    "productCount": 3,
+    "createdAt": 1778234298666
+  },
+  {
+    "id": "the-art-of-entertaining",
+    "name": "The Art of Entertaining",
+    "description": "Everything you need to host in style — from serveware to decor.",
+    "image": "https://images.pexels.com/photos/1122868/pexels-photo-1122868.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_459_4for9u",
+      "prod_442_aubac0",
+      "prod_428_sdzhed",
+      "prod_463_rbyvin"
+    ],
+    "productCount": 4,
+    "createdAt": 1782208698666
+  },
+  {
+    "id": "travel-light-capsule",
+    "name": "Travel Light Capsule",
+    "description": "Curated travel essentials for the modern minimalist.",
+    "image": "https://images.pexels.com/photos/577769/pexels-photo-577769.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_1415_86o2to",
+      "prod_1409_d4srsy",
+      "prod_1374_iekhrf"
+    ],
+    "productCount": 3,
+    "createdAt": 1778320698666
+  },
+  {
+    "id": "home-sanctuary",
+    "name": "Home Sanctuary",
+    "description": "Transform your home into a peaceful retreat.",
+    "image": "https://images.pexels.com/photos/4434461/pexels-photo-4434461.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_48_cv5lef",
+      "prod_33_hw32jk",
+      "prod_87_n64yl1"
+    ],
+    "productCount": 3,
+    "createdAt": 1780567098666
+  },
+  {
+    "id": "kitchen-essentials",
+    "name": "Kitchen Essentials",
+    "description": "The tools every home chef needs.",
+    "image": "https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_428_sdzhed",
+      "prod_409_m4mfmt",
+      "prod_463_rbyvin",
+      "prod_420_ewga19"
+    ],
+    "productCount": 4,
+    "createdAt": 1781863098666
+  },
+  {
+    "id": "mindful-morning",
+    "name": "Mindful Morning",
+    "description": "Start your day with intention — wellness picks for morning rituals.",
+    "image": "https://images.pexels.com/photos/5896781/pexels-photo-5896781.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_1705_1a6ym5",
+      "prod_1650_9u7xi6",
+      "prod_1661_7bvciz"
+    ],
+    "productCount": 3,
+    "createdAt": 1780048698666
+  },
+  {
+    "id": "the-scent-library",
+    "name": "The Scent Library",
+    "description": "A curated journey through our finest fragrances.",
+    "image": "https://images.pexels.com/photos/7834567/pexels-photo-7834567.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_2329_awj6uc",
+      "prod_2373_rro8zj",
+      "prod_2335_aavcmv"
+    ],
+    "productCount": 3,
+    "createdAt": 1779271098666
+  },
+  {
+    "id": "workspace-edit",
+    "name": "Workspace Edit",
+    "description": "Beautiful, functional pieces for your home office.",
+    "image": "https://images.pexels.com/photos/5305143/pexels-photo-5305143.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_2019_jgty5c",
+      "prod_2003_0698jt",
+      "prod_2024_iey0fz"
+    ],
+    "productCount": 3,
+    "createdAt": 1781603898666
+  },
+  {
+    "id": "night-in-essentials",
+    "name": "Night In Essentials",
+    "description": "Cozy up with our collection of comfort and relaxation.",
+    "image": "https://images.pexels.com/photos/4434461/pexels-photo-4434461.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_33_hw32jk",
+      "prod_48_cv5lef",
+      "prod_80_3p3so0",
+      "prod_87_n64yl1"
+    ],
+    "productCount": 4,
+    "createdAt": 1779962298666
+  },
+  {
+    "id": "gift-guide-under-50",
+    "name": "Gift Guide: Under $50",
+    "description": "Thoughtful gifts that won't break the bank.",
+    "image": "https://images.pexels.com/photos/2762942/pexels-photo-2762942.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_2184_cnai7o",
+      "prod_2209_gzainw",
+      "prod_2214_vw76q8"
+    ],
+    "productCount": 3,
+    "createdAt": 1779530298666
+  },
+  {
+    "id": "gift-guide-50-150",
+    "name": "Gift Guide: $50-$150",
+    "description": "Meaningful mid-range gifts for everyone on your list.",
+    "image": "https://images.pexels.com/photos/9678901/pexels-photo-9678901.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_2214_vw76q8",
+      "prod_2209_gzainw",
+      "prod_2169_rj8fm0"
+    ],
+    "productCount": 3,
+    "createdAt": 1783245498666
+  },
+  {
+    "id": "premium-audio-collection",
+    "name": "Premium Audio Collection",
+    "description": "High-fidelity sound for discerning ears.",
+    "image": "https://images.pexels.com/photos/3945681/pexels-photo-3945681.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_1066_lt8zwl",
+      "prod_1096_dojcdm",
+      "prod_1078_xvgasx"
+    ],
+    "productCount": 3,
+    "createdAt": 1780653498666
+  },
+  {
+    "id": "outdoor-adventure",
+    "name": "Outdoor Adventure",
+    "description": "Gear up for your next adventure with our top picks.",
+    "image": "https://images.pexels.com/photos/6097752/pexels-photo-6097752.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_1415_86o2to",
+      "prod_1362_rwfagv",
+      "prod_1374_iekhrf"
+    ],
+    "productCount": 3,
+    "createdAt": 1778579898666
+  },
+  {
+    "id": "sustainable-living",
+    "name": "Sustainable Living",
+    "description": "Eco-friendly products for a greener lifestyle.",
+    "image": "https://images.pexels.com/photos/5896781/pexels-photo-5896781.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_48_cv5lef",
+      "prod_33_hw32jk",
+      "prod_114_ix0sae"
+    ],
+    "productCount": 3,
+    "createdAt": 1781258298666
+  },
+  {
+    "id": "fitness-fundamentals",
+    "name": "Fitness Fundamentals",
+    "description": "Everything you need to build your home gym.",
+    "image": "https://images.pexels.com/photos/8678901/pexels-photo-8678901.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_1705_1a6ym5",
+      "prod_1682_m460bq",
+      "prod_1661_7bvciz"
+    ],
+    "productCount": 3,
+    "createdAt": 1780221498666
+  },
+  {
+    "id": "luxury-bath-rituals",
+    "name": "Luxury Bath Rituals",
+    "description": "Turn your bathroom into a spa with our bath collection.",
+    "image": "https://images.pexels.com/photos/7834567/pexels-photo-7834567.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_736_33saj7",
+      "prod_761_f1r6uz",
+      "prod_712_64821j"
+    ],
+    "productCount": 3,
+    "createdAt": 1782640698666
+  },
+  {
+    "id": "the-perfect-cup",
+    "name": "The Perfect Cup",
+    "description": "Coffee and tea essentials for the perfect brew.",
+    "image": "https://images.pexels.com/photos/3945681/pexels-photo-3945681.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_463_rbyvin",
+      "prod_448_ku741k",
+      "prod_428_sdzhed",
+      "prod_409_m4mfmt"
+    ],
+    "productCount": 4,
+    "createdAt": 1782813498666
+  },
+  {
+    "id": "designer-desk",
+    "name": "Designer Desk",
+    "description": "Elevate your workspace with designer desk accessories.",
+    "image": "https://images.pexels.com/photos/9678901/pexels-photo-9678901.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_2023_au3vne",
+      "prod_2024_iey0fz",
+      "prod_2013_6jfjnk"
+    ],
+    "productCount": 3,
+    "createdAt": 1779962298666
+  },
+  {
+    "id": "wellness-wonderland",
+    "name": "Wellness Wonderland",
+    "description": "Products that nurture mind, body, and spirit.",
+    "image": "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1200",
+    "products": [
+      "prod_1661_7bvciz",
+      "prod_1710_sx8qbm",
+      "prod_1650_9u7xi6"
+    ],
+    "productCount": 3,
+    "createdAt": 1780999098666
+  }
+]

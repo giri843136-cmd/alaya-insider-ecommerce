@@ -40,8 +40,9 @@ Create a Stripe account, obtain the required API keys, configure them in `server
 3. Set up a Stripe webhook endpoint pointing to `https://[your-domain]/api/v1/payments/webhooks/stripe` with events: `payment_intent.succeeded`, `payment_intent.payment_failed`, `charge.refunded`
 4. Copy the `STRIPE_WEBHOOK_SECRET` (signing secret) from the webhook endpoint settings
 5. Add all three values to `server/.env`
-6. Run `npm run dev` and confirm 0 critical env warnings
-7. Test with a real card via the frontend checkout flow
+6. Restart the server (`cd server && npm run dev`) and confirm 0 critical env warnings on startup
+7. Verify health endpoint shows `"stripe": "connected"` via `GET /api/v1/system/health`
+8. Test a payment intent via `POST /api/v1/payments/intents` — expect a valid client secret in response
 
 ### Estimated Time
 

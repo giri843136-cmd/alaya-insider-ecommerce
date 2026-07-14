@@ -147,9 +147,7 @@ export function RevenueForecastWidget() {
 export function TopPartnerCard() {
   const analytics = useMemo(() => getCommissionAnalytics(), []);
 
-  if (analytics.commissionByPartner.length === 0) return null;
-
-  const topPartner = analytics.commissionByPartner.sort((a, b) => b.earned - a.earned)[0];
+  if (analytics.commissionByPartner.length === 0) return null;          const topPartner = analytics.commissionByPartner.sort((a: { earned: number }, b: { earned: number }) => b.earned - a.earned)[0];
 
   return (
     <div className="rounded-xl border border-line bg-surface p-4">

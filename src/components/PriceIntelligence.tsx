@@ -56,7 +56,7 @@ export function PriceHistoryChart({ product }: { product: Product }) {
 
       {/* Mini bar chart */}
       <div className="flex items-end gap-1 h-16">
-        {ph.records.map((r, i) => {
+        {ph.records.map((r: { date: string; price: number }, i: number) => {
           const height = ((r.price - min) / range) * 100;
           const isLatest = i === ph.records.length - 1;
           return (

@@ -173,11 +173,11 @@ export function CookieConsent() {
           <p className="border-t border-line px-5 py-2 text-[0.6rem] text-muted sm:px-6">
             <ShieldCheck className="mr-1 inline h-3 w-3" />
             Your data is never sold. Read our{" "}
-            <a href="/#/legal/privacy" className="underline hover:text-accent">
+            <a href="https://alayainsider.com/#/legal/privacy" className="underline hover:text-accent">
               Privacy policy
             </a>{" "}
             and{" "}
-            <a href="/#/legal/terms" className="underline hover:text-accent">
+            <a href="https://alayainsider.com/#/legal/terms" className="underline hover:text-accent">
               Terms
             </a>
             .

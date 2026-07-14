@@ -45,6 +45,7 @@
 
 import { Hono } from "hono";
 import { v4 } from "uuid";
+import { getSession, setSession, errorEnvelope } from "../lib/context.js";
 import {
   sendOtp, verifyOtp,
   createSession, validateSession, refreshSession,
@@ -75,14 +76,14 @@ const auth = new Hono();
 async function requireAuth(c: any, next: any) {
   const authHeader = c.req.header("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return c.json({ code: "UNAUTHORIZED", message: "Missing or invalid auth token." }, 401);
+    return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "Missing or invalid auth token."), 401);
   }
   const token = authHeader.slice(7);
   const session = await validateSession(token);
   if (!session) {
-    return c.json({ code: "SESSION_EXPIRED", message: "Session expired or invalid. Please sign in again." }, 401);
+    return c.json(errorEnvelope(c, 401, "SESSION_EXPIRED", "Session expired or invalid. Please sign in again."), 401);
   }
-  (c as any).session = session;
+  setSession(c, session);
   await touchSession(token);
   await next();
 }
@@ -93,14 +94,14 @@ async function requireAuth(c: any, next: any) {
 async function requireAdminAuth(c: any, next: any) {
   const authHeader = c.req.header("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return c.json({ code: "UNAUTHORIZED", message: "Missing or invalid auth token." }, 401);
+    return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "Missing or invalid auth token."), 401);
   }
   const token = authHeader.slice(7);
   const session = await validateSession(token, "admin");
   if (!session) {
-    return c.json({ code: "SESSION_EXPIRED", message: "Admin session expired or invalid." }, 401);
+    return c.json(errorEnvelope(c, 401, "SESSION_EXPIRED", "Admin session expired or invalid."), 401);
   }
-  (c as any).session = session;
+  setSession(c, session);
   await touchSession(token);
   await next();
 }
@@ -530,25 +531,28 @@ authenticated.use("*", async (c, next) => {
   if (!session) {
     return c.json({ code: "SESSION_EXPIRED", message: "Session expired or invalid." }, 401);
   }
-  (c as any).session = session;
+  setSession(c, session);
   await touchSession(token);
   await next();
 });
 
 authenticated.post("/logout", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   await terminateSession(session.id);
   return c.json({ success: true, message: "Session terminated." });
 });
 
 authenticated.post("/logout-all", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   const count = await terminateAllSessions(session.userId);
   return c.json({ success: true, message: `${count} sessions terminated.` });
 });
 
 authenticated.get("/sessions", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   const sessions = await getUserSessions(session.userId);
   return c.json({
     sessions: sessions.map((s) => ({
@@ -562,40 +566,46 @@ authenticated.get("/sessions", async (c) => {
 
 authenticated.delete("/sessions/:id", async (c) => {
   const ok = await terminateSession(c.req.param("id"));
-  if (!ok) return c.json({ code: "NOT_FOUND", message: "Session not found." }, 404);
+  if (!ok) return c.json(errorEnvelope(c, 404, "NOT_FOUND", "Session not found."), 404);
   return c.json({ success: true, message: "Session terminated." });
 });
 
 authenticated.post("/devices", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   const { name, fingerprint } = await c.req.json<{ name: string; fingerprint: string }>();
   if (!name || !fingerprint) {
-    return c.json({ code: "MISSING_FIELDS", message: "Device name and fingerprint required." }, 400);
-  }    const device = await addTrustedDevice(session.userId, name, fingerprint, session.browser, session.os, session.ip);
+    return c.json(errorEnvelope(c, 400, "MISSING_FIELDS", "Device name and fingerprint required."), 400);
+  }
+  const device = await addTrustedDevice(session.userId, name, fingerprint, session.browser, session.os, session.ip);
   return c.json({ success: true, device });
 });
 
 authenticated.delete("/devices/:id", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   const ok = await removeTrustedDevice(session.userId, c.req.param("id"));
-  if (!ok) return c.json({ code: "NOT_FOUND", message: "Device not found." }, 404);
+  if (!ok) return c.json(errorEnvelope(c, 404, "NOT_FOUND", "Device not found."), 404);
   return c.json({ success: true });
 });
 
 authenticated.get("/devices", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   const devices = await getTrustedDevices(session.userId);
   return c.json({ devices });
 });
 
 authenticated.get("/security/events", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   const limit = Number(c.req.query("limit")) || 50;
   return c.json({ events: await getSecurityEvents(session.userId, undefined, limit) });
 });
 
 authenticated.get("/security/login-history", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   const limit = Number(c.req.query("limit")) || 50;
   return c.json({ history: await getLoginHistory(session.userId, undefined, limit) });
 });
@@ -618,20 +628,22 @@ adminAuth.use("*", async (c, next) => {
   if (!session) {
     return c.json({ code: "SESSION_EXPIRED", message: "Admin session expired or invalid." }, 401);
   }
-  (c as any).session = session;
+  setSession(c, session);
   await touchSession(token);
   await next();
 });
 
 adminAuth.post("/recovery/codes", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   const result = await generateRecoveryCodes(session.userId);
   if (!result.success) return c.json({ code: "ERROR", message: result.message }, 500);
   return c.json(result);
 });
 
 adminAuth.get("/recovery/status", async (c) => {
-  const session = (c as any).session;
+  const session = getSession(c);
+  if (!session) return c.json(errorEnvelope(c, 401, "UNAUTHORIZED", "No session"), 401);
   return c.json({ status: await getRecoveryCodesInfo(session.userId) });
 });
 

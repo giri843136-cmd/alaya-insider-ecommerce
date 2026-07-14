@@ -74,6 +74,21 @@ import { useStore } from "../../context/StoreContext";
 import { cn } from "@/utils/cn";
 import { BackendStatusDot } from "./BackendStatusDot";
 
+/* ================================================================== */
+/*  ENTERPRISE PROVIDERS — lazy-mounted only for admin pages           */
+/*  These providers are only mounted when admin routes are accessed,   */
+/*  reducing unnecessary renders and bundle cost on storefront pages.  */
+/* ================================================================== */
+
+import { IdentityProvider } from "../../context/IdentityContext";
+import { GatewayProvider } from "../../context/GatewayContext";
+import { CommunicationProvider } from "../../context/CommunicationContext";
+import { ObservabilityProvider } from "../../context/ObservabilityContext";
+import { DataProvider } from "../../context/DataContext";
+import { IntelligenceProvider } from "../../context/IntelligenceContext";
+import { BusinessIntelligenceProvider } from "../../context/BusinessIntelligenceContext";
+import { DamProvider } from "../../lib/damContext";
+
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAdmin } = useAuth();
   if (!isAdmin) return <Navigate to="/admin/login" replace />;
@@ -156,20 +171,20 @@ const NAV = [
   { to: "/admin/commerce/supplier-automation/failover", label: "Failover & Pricing", icon: Shield },
   { to: "/admin/commerce/supplier-automation/analytics", label: "Analytics & AI", icon: BrainCircuit },
   { to: "/admin/commerce/supplier-automation/control-center", label: "Control Center", icon: Settings2 },
-  /* === SHIPPING & LOGISTICS (PR-5) === */
+  /* === SHIPPING & LOGISTICS === */
   { to: "/admin/shipping", end: true, label: "Shipping Dashboard", icon: Ship },
   { to: "/admin/shipping/carriers", label: "Carrier Manager", icon: Truck },
   { to: "/admin/shipping/shipments", label: "Shipment Manager", icon: Package },
   { to: "/admin/shipping/tracking", label: "Tracking Center", icon: MapPin },
   { to: "/admin/shipping/analytics", label: "Shipping Analytics", icon: BarChart3 },
   { to: "/admin/shipping/health", label: "Carrier Health", icon: Activity },
-  /* === ORDER ORCHESTRATOR (PR-6) === */
+  /* === ORDER ORCHESTRATOR === */
   { to: "/admin/orchestrator", end: true, label: "Order Orchestrator", icon: Server },
   { to: "/admin/orchestrator/running", label: "Running", icon: Play },
   { to: "/admin/orchestrator/queues", label: "Queues", icon: Radio },
   { to: "/admin/orchestrator/events", label: "Events", icon: Zap },
   { to: "/admin/orchestrator/failures", label: "Failures", icon: AlertTriangle },
-  /* === ENTERPRISE AUTOMATION (PR-7) === */
+  /* === ENTERPRISE AUTOMATION === */
   { to: "/admin/automation", end: true, label: "Automation Platform", icon: Zap },
   { to: "/admin/automation/rules", label: "Rules", icon: Play },
   { to: "/admin/automation/jobs", label: "Jobs", icon: Radio },
@@ -294,49 +309,65 @@ export default function AdminLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-canvas">
-      {/* Desktop sidebar - fixed position */}
-      <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[260px] flex-col overflow-hidden border-r border-line bg-surface lg:flex" style={{ position: 'fixed' }}>{Sidebar}</aside>
+    <DamProvider>
+    <IdentityProvider>
+      <GatewayProvider>
+        <CommunicationProvider>
+          <ObservabilityProvider>
+            <DataProvider>
+              <IntelligenceProvider>
+                <BusinessIntelligenceProvider>
+                  <div className="min-h-screen bg-canvas">
+                    {/* Desktop sidebar - fixed position */}
+                    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[260px] flex-col overflow-hidden border-r border-line bg-surface lg:flex" style={{ position: 'fixed' }}>{Sidebar}</aside>
 
-      {/* Mobile top bar */}
-      <div className="sticky top-0 z-40 flex items-center justify-between border-b border-line bg-surface px-4 py-3 lg:hidden">
-        <button onClick={() => setOpen(true)} aria-label="Open menu" className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface2">
-          <Menu className="h-5 w-5" />
-        </button>
-        <span className="font-display text-base font-semibold tracking-[0.25em]">{settings.storeShort}</span>
-        <button onClick={toggleTheme} aria-label="Toggle theme" className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface2">
-          {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-        </button>
-      </div>
+                    {/* Mobile top bar */}
+                    <div className="sticky top-0 z-40 flex items-center justify-between border-b border-line bg-surface px-4 py-3 lg:hidden">
+                      <button onClick={() => setOpen(true)} aria-label="Open menu" className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface2">
+                        <Menu className="h-5 w-5" />
+                      </button>
+                      <span className="font-display text-base font-semibold tracking-[0.25em]">{settings.storeShort}</span>
+                      <button onClick={toggleTheme} aria-label="Toggle theme" className="grid h-10 w-10 place-items-center rounded-full hover:bg-surface2">
+                        {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                      </button>
+                    </div>
 
-      {/* Mobile drawer */}
-      {open && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)} aria-hidden="true" />
-          <aside className="absolute inset-y-0 left-0 flex h-full flex-col overflow-hidden w-72 bg-surface animate-drawer-left">{Sidebar}</aside>
-        </div>
-      )}
+                    {/* Mobile drawer */}
+                    {open && (
+                      <div className="fixed inset-0 z-50 lg:hidden">
+                        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setOpen(false)} aria-hidden="true" />
+                        <aside className="absolute inset-y-0 left-0 flex h-full flex-col overflow-hidden w-72 bg-surface animate-drawer-left">{Sidebar}</aside>
+                      </div>
+                    )}
 
-      <div className="flex min-h-screen flex-col lg:ml-[260px]">
-        {/* Desktop top bar */}
-        <header className="sticky top-0 z-30 hidden items-center justify-between gap-4 border-b border-line bg-surface/80 px-6 py-3 backdrop-blur lg:flex">
-          <button onClick={() => setPaletteOpen(true)} className="group flex w-full max-w-md items-center gap-2 rounded-lg border border-line bg-surface2/60 px-3 py-2 text-sm text-muted transition-colors hover:border-accent">
-            <Search className="h-4 w-4" />
-            <span>Search or jump to…</span>
-            <kbd className="ml-auto rounded border border-line bg-surface px-1.5 py-0.5 text-[0.65rem] text-muted">⌘K</kbd>
-          </button>
-          <div className="flex items-center gap-2">
-            <BackendStatusDot />
-            <Link to="/" target="_blank" rel="noopener" className="btn-ghost btn-sm"><ExternalLink className="h-4 w-4" /> View store</Link>
-          </div>
-        </header>
+                    <div className="flex min-h-screen flex-col lg:ml-[260px]">
+                      {/* Desktop top bar */}
+                      <header className="sticky top-0 z-30 hidden items-center justify-between gap-4 border-b border-line bg-surface/80 px-6 py-3 backdrop-blur lg:flex">
+                        <button onClick={() => setPaletteOpen(true)} className="group flex w-full max-w-md items-center gap-2 rounded-lg border border-line bg-surface2/60 px-3 py-2 text-sm text-muted transition-colors hover:border-accent">
+                          <Search className="h-4 w-4" />
+                          <span>Search or jump to…</span>
+                          <kbd className="ml-auto rounded border border-line bg-surface px-1.5 py-0.5 text-[0.65rem] text-muted">⌘K</kbd>
+                        </button>
+                        <div className="flex items-center gap-2">
+                          <BackendStatusDot />
+                          <Link to="/" target="_blank" rel="noopener" className="btn-ghost btn-sm"><ExternalLink className="h-4 w-4" /> View store</Link>
+                        </div>
+                      </header>
 
-        <main className="min-h-screen flex-1">
-          <Outlet />
-        </main>
-      </div>
+                      <main className="min-h-screen flex-1">
+                        <Outlet />
+                      </main>
+                    </div>
 
-      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
-    </div>
+                    <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+                  </div>
+                </BusinessIntelligenceProvider>
+              </IntelligenceProvider>
+            </DataProvider>
+          </ObservabilityProvider>
+        </CommunicationProvider>
+      </GatewayProvider>
+    </IdentityProvider>
+    </DamProvider>
   );
 }

@@ -830,6 +830,27 @@ CREATE INDEX IF NOT EXISTS idx_affiliate_health_logs_link_id ON affiliate_health
 CREATE INDEX IF NOT EXISTS idx_affiliate_health_logs_healthy ON affiliate_health_logs(healthy);
 CREATE INDEX IF NOT EXISTS idx_affiliate_health_logs_checked_at ON affiliate_health_logs(checked_at DESC);
 
+-- Affiliate Sync Logs (Merchant Sync Engine history)
+CREATE TABLE IF NOT EXISTS affiliate_sync_logs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  provider VARCHAR(100) NOT NULL,
+  type VARCHAR(50) NOT NULL DEFAULT 'full',
+  status VARCHAR(50) NOT NULL DEFAULT 'pending',
+  started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  imported INTEGER DEFAULT 0,
+  updated INTEGER DEFAULT 0,
+  errors INTEGER DEFAULT 0,
+  error_details TEXT[] DEFAULT '{}',
+  duration_ms INTEGER DEFAULT 0,
+  config_snapshot JSONB DEFAULT '{}',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_affiliate_sync_logs_provider ON affiliate_sync_logs(provider);
+CREATE INDEX IF NOT EXISTS idx_affiliate_sync_logs_status ON affiliate_sync_logs(status);
+CREATE INDEX IF NOT EXISTS idx_affiliate_sync_logs_created_at ON affiliate_sync_logs(created_at DESC);
+
 -- Affiliate Price History
 CREATE TABLE IF NOT EXISTS affiliate_price_history (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -2287,6 +2308,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DE
 CREATE TABLE IF NOT EXISTS jobs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   type VARCHAR(100) NOT NULL,
+  queue VARCHAR(100) NOT NULL DEFAULT 'default',
   status VARCHAR(50) NOT NULL DEFAULT 'pending',
   priority INTEGER DEFAULT 0,
   payload JSONB DEFAULT '{}',
@@ -2300,6 +2322,13 @@ CREATE TABLE IF NOT EXISTS jobs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Add queue column if missing on existing databases
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'jobs' AND column_name = 'queue') THEN
+    ALTER TABLE jobs ADD COLUMN queue VARCHAR(100) NOT NULL DEFAULT 'default';
+  END IF;
+END $$;
 
 CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_type ON jobs(type);

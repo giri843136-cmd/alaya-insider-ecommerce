@@ -14,7 +14,7 @@ import { Badge, EmptyState, Dialog } from "../../components/ui";
 import { cn } from "@/utils/cn";
 import {
   getMarketplaces, addMarketplace, updateMarketplace, deleteMarketplace,
-  syncMarketplace, getSyncLogs, type MarketplaceConfig, type MarketplaceNetwork,
+  syncMarketplace, getSyncLogs, type MarketplaceRegistryConfig, type MarketplaceNetwork,
 } from "../../lib/affiliateCommerce";
 
 const NETWORK_OPTIONS: { value: MarketplaceNetwork; label: string }[] = [
@@ -50,8 +50,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AdminMarketplaceRegistry() {
   const [marketplaces, setMarketplaces] = useState(getMarketplaces());
-  const [editing, setEditing] = useState<Partial<MarketplaceConfig> | null>(null);
-  const [toDelete, setToDelete] = useState<MarketplaceConfig | null>(null);
+  const [editing, setEditing] = useState<Partial<MarketplaceRegistryConfig> | null>(null);
+  const [toDelete, setToDelete] = useState<MarketplaceRegistryConfig | null>(null);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [tab, setTab] = useState<"marketplaces" | "sync_logs">("marketplaces");
 

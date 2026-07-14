@@ -22,6 +22,7 @@ import { csrf } from "hono/csrf";
 import { limiter } from "./middleware/rateLimiter.js";
 import { validateEnv } from "./middleware/validateEnv.js";
 import { routes } from "./routes/index.js";
+import { errorEnvelope, type Variables } from "./lib/context.js";
 
 // PostgreSQL Database
 import { checkDbHealth, waitForDatabase, closePool, ENV } from "./db/index.js";
@@ -35,8 +36,29 @@ import { initPaymentProviders } from "./services/payments/registry.js";
 // Observability
 import { writeLog } from "./services/observabilityEngine.js";
 
+// Background Job Queue
+import { startDefaultWorker, scheduleJob, registerHandler } from "./services/jobQueue.js";
+
 // Validate environment variables on startup
 validateEnv();
+
+/* ================================================================== */
+/*  HONO VARIABLE TYPES (imported from lib/context.ts)                */
+/* ================================================================== */
+
+type AppType = { Variables: Variables };
+
+/* ================================================================== */
+/*  HELPER: Generate request & trace IDs                               */
+/* ================================================================== */
+
+function generateRequestId(): string {
+  return `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
+}
+
+function generateTraceId(): string {
+  return `trace_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+}
 
 /* ================================================================== */
 /*  DATABASE INITIALIZATION                                            */
@@ -45,7 +67,7 @@ validateEnv();
 async function initializeDatabase(): Promise<void> {
   const connected = await waitForDatabase();
   if (!connected) {
-    await writeLog({ level: "warning", message: "Could not connect to PostgreSQL — falling back to legacy JSON store", service: "server", module: "database" }).catch(() => {});
+    await writeLog({ level: "warning", message: "Could not connect to PostgreSQL — database unavailable", service: "server", module: "database" }).catch(() => {});
     return;
   }
 
@@ -104,6 +126,35 @@ async function initializeDatabase(): Promise<void> {
   } catch (err) {
     await writeLog({ level: "warning", message: `Payment provider initialization skipped: ${err instanceof Error ? err.message : err}`, service: "server", module: "payments" }).catch(() => {});
   }
+
+  // Start background job worker
+  try {
+    startDefaultWorker();
+    await writeLog({ level: "info", message: "Background job worker started", service: "server", module: "jobs" }).catch(() => {});
+  } catch (err) {
+    await writeLog({ level: "warning", message: `Background worker start skipped: ${err instanceof Error ? err.message : err}`, service: "server", module: "jobs" }).catch(() => {});
+  }
+
+  // Register merchant sync job handlers
+  try {
+    const { registerMerchantSyncHandlers } = await import("./services/merchantSyncEngine.js");
+    await registerMerchantSyncHandlers();
+    await writeLog({ level: "info", message: "Merchant sync handlers registered", service: "server", module: "jobs" }).catch(() => {});
+  } catch (err) {
+    await writeLog({ level: "warning", message: `Merchant sync handler registration skipped: ${err instanceof Error ? err.message : err}`, service: "server", module: "jobs" }).catch(() => {});
+  }
+
+  // Schedule recurring maintenance jobs
+  // These run in the background after server starts, no blocking needed
+  // scheduleJob returns a cleanup function (() => void), not a Promise, so no .catch() is needed
+  scheduleJob("affiliate-price-refresh", "affiliate-price", 3600000, () => ({}), { priority: 3 });
+  scheduleJob("affiliate-health-check", "affiliate-health", 86400000, () => ({}), { priority: 2 });
+  // merchant-sync-full requires admin to configure provider credentials first
+  // The placeholder job runs daily but will only produce results when a provider is configured
+  scheduleJob("merchant-sync-full", "affiliate-price", 86400000, () => ({ provider: "amazon_associates" }), { priority: 3 });
+  scheduleJob("cleanup-otp", "cleanup", 3600000, () => ({}), { priority: 1 });
+  scheduleJob("cleanup-sessions", "cleanup", 3600000, () => ({}), { priority: 1 });
+  scheduleJob("search-reindex", "search-reindex", 86400000, () => ({ entity: "products" }), { priority: 2 });
 }
 
 // Initialize DB on startup
@@ -111,25 +162,46 @@ initializeDatabase().catch((err) => {
   writeLog({ level: "error", message: `Database initialization failed: ${err}`, service: "server", module: "database" }).catch(() => {});
 });
 
-const app = new Hono();
+const app = new Hono<AppType>();
+
+/* ================================================================== */
+/*  REQUEST ID & TRACE ID (before all other middleware)                */
+/* ================================================================== */
+
+app.use("*", async (c, next) => {
+  const requestId = generateRequestId();
+  const traceId = generateTraceId();
+  c.set("requestId", requestId);
+  c.set("traceId", traceId);
+  c.header("X-Request-Id", requestId);
+  c.header("X-Trace-Id", traceId);
+  await next();
+});
 
 /* ================================================================== */
 /*  GLOBAL MIDDLEWARE                                                  */
 /* ================================================================== */
 
+// Determine allowed origins based on environment
+const isProduction = ENV === "production";
+const allowedOrigins = isProduction
+  ? [
+      "https://alayainsider.com",
+      "https://www.alayainsider.com",
+    ]
+  : [
+      "http://localhost:5173",
+      "http://localhost:4173",
+      // Allow production origins even in dev for testing
+      "https://alayainsider.com",
+      "https://www.alayainsider.com",
+    ];
+
 app.use("*", cors({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://localhost:5176",
-    "http://localhost:4173",
-    "https://alayainsider.com",
-    "https://www.alayainsider.com",
-  ],
+  origin: allowedOrigins,
   allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowHeaders: ["Content-Type", "Authorization", "X-API-Key", "X-Client-Version", "X-Client-Platform"],
-  exposeHeaders: ["X-Request-Id", "X-Cache"],
+  exposeHeaders: ["X-Request-Id", "X-Trace-Id", "X-Cache"],
   maxAge: 86400,
   credentials: true,
 }));
@@ -138,7 +210,9 @@ app.use("*", logger());
 app.use("*", secureHeaders({
   contentSecurityPolicy: {
     defaultSrc: ["'self'"],
-    scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+    // 'unsafe-inline' required by React for style injection during hydration
+    // 'unsafe-eval' removed — no dynamic eval usage in production code
+    scriptSrc: ["'self'", "'unsafe-inline'"],
     styleSrc: ["'self'", "'unsafe-inline'"],
     imgSrc: ["'self'", "data:", "https://*.alayainsider.com", "https://*.amazon.com", "https://*.amazonaws.com"],
     fontSrc: ["'self'", "data:", "https://fonts.gstatic.com"],
@@ -150,46 +224,27 @@ app.use("*", secureHeaders({
     formAction: ["'self'"],
     upgradeInsecureRequests: [],
   },
-  // NOTE: COEP is intentionally disabled because the frontend loads
-  // cross-origin resources (Amazon images, Google Fonts, Stripe frames)
-  // that do not set Cross-Origin-Resource-Policy headers.
-  // To enable COEP, all third-party resources would need to opt in.
+  // COEP is intentionally disabled (cross-origin resources needed for Amazon images, Google Fonts, Stripe)
   crossOriginEmbedderPolicy: false,
   crossOriginResourcePolicy: "same-origin",
   crossOriginOpenerPolicy: "same-origin",
   strictTransportSecurity: "max-age=31536000; includeSubDomains; preload",
   xFrameOptions: "DENY",
   xContentTypeOptions: "nosniff",
-  referrerPolicy: "no-referrer",
+  referrerPolicy: "strict-origin-when-cross-origin",
 }));
 
-// Remove default Server header and add Permissions-Policy + Origin-Agent-Cluster
+// Security hardening headers
 app.use("*", async (c, next) => {
   c.header("Permissions-Policy", "camera=(), microphone=(), geolocation=(), interest-cohort=()");
-  c.header("Origin-Agent-Cluster", "?1")
+  c.header("Origin-Agent-Cluster", "?1");
   await next();
 });
+
 app.use("*", csrf({
-  origin: [
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:5175",
-    "http://localhost:5176",
-    "http://localhost:4173",
-    "https://alayainsider.com",
-    "https://www.alayainsider.com",
-  ],
+  origin: allowedOrigins,
 }));
 app.use("*", prettyJSON());
-
-/* ================================================================== */
-/*  REQUEST ID                                                         */
-/* ================================================================== */
-
-app.use("*", async (c, next) => {
-  c.header("X-Request-Id", `req_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`);
-  await next();
-});
 
 /* ================================================================== */
 /*  HEALTH CHECK & SYSTEM ENDPOINTS (registered before rate limiter)   */
@@ -267,24 +322,36 @@ app.get("/*", async (c, next) => {
 });
 
 /* ================================================================== */
-/*  ERROR HANDLING                                                     */
+/*  STANDARDISED ERROR RESPONSE (imported from lib/context.ts)       */
 /* ================================================================== */
 
 app.onError((err, c) => {
-  writeLog({ level: "error", message: `Unhandled error: ${err.message}`, service: "server", module: "error_handler" }).catch(() => {});
-  return c.json({
-    code: "INTERNAL_ERROR",
-    message: err.message || "Internal server error",
-    status: 500,
-  }, 500);
+  const requestId = c.get?.("requestId") || "unknown";
+  const traceId = c.get?.("traceId") || "unknown";
+  writeLog({
+    level: "error",
+    message: `Unhandled error [${requestId}]: ${err.message}`,
+    service: "server",
+    module: "error_handler",
+    metadata: { requestId, traceId, error: err.stack },
+  }).catch(() => {});
+
+  return c.json(errorEnvelope(c, 500, "INTERNAL_ERROR", err.message || "Internal server error"), 500);
 });
 
 app.notFound((c) => {
-  return c.json({
-    code: "NOT_FOUND",
+  writeLog({
+    level: "warning",
     message: `Route not found: ${c.req.method} ${c.req.path}`,
-    status: 404,
-  }, 404);
+    service: "server",
+    module: "router",
+    metadata: { method: c.req.method, path: c.req.path },
+  }).catch(() => {});
+
+  return c.json(
+    errorEnvelope(c, 404, "NOT_FOUND", `Route not found: ${c.req.method} ${c.req.path}`),
+    404,
+  );
 });
 
 /* ================================================================== */

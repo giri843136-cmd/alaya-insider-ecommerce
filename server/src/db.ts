@@ -1,12 +1,20 @@
 /**
- * ALAYA INSIDER — Backend Database with Persistent Storage
+ * ALAYA INSIDER — Backend Database with Persistent Storage (LEGACY)
  * --------------------------------------------------------------------------
- * In-memory data store that mirrors the frontend StoreData types.
- * All CRUD operations are implemented as pure functions on a mutable store.
- * Data is persisted to a JSON file on disk so it survives server restarts.
+ * @deprecated This module is the legacy JSON-file-based store.
+ * New code should use the PostgreSQL connection pool and repository
+ * pattern in `./db/index.ts` and `./db/repositories/`.
  *
- * On startup, the store loads from disk. If no file exists, seed data is used.
- * After every CRUD mutation, the store is auto-saved (debounced) to disk.
+ * This file remains active because several services (downloader,
+ * notificationEngine, webhooks) still depend on getStore()/persistStore()
+ * for in-memory data that hasn't been migrated to PostgreSQL yet.
+ *
+ * Planned migration: Move notification engine, downloader DAM storage,
+ * and webhook delivery records to PostgreSQL tables.
+ *
+ * Start:  npm run dev  (or: tsx watch src/index.ts)
+ * Port:   3001 (configurable via PORT env var)
+ * Health: GET /api/v1/system/health
  */
 
 import { v4 } from "uuid";

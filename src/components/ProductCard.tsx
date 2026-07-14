@@ -1,6 +1,6 @@
 import { memo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingBag, ArrowUpRight, Star, Scale } from "lucide-react";
+import { Heart, ShoppingBag, Star, Scale } from "lucide-react";
 import type { Product } from "../lib/types";
 import { useCommerce } from "../context/CommerceContext";
 import { useStore } from "../context/StoreContext";
@@ -11,30 +11,18 @@ import { SafeImg } from "./SafeImg";
 import { cn } from "@/utils/cn";
 import { discountPercent } from "../lib/utils";
 
-function defaultVariant(product: Product) {
-  if (!product.variants?.length) return { key: "", label: "" };
-  const key = product.variants.map((v) => v.options[0]).join(" | ");
-  const label = product.variants.map((v) => `${v.name}: ${v.options[0]}`).join(" · ");
-  return { key, label };
-}
-
 const ProductCardInner = memo(function ProductCardInner({ product, onQuickView }: { product: Product; onQuickView?: (p: Product) => void }) {
-  const { addToCart, toggleWishlist, inWishlist, toggleCompare, inCompare } = useCommerce();
+  const { toggleWishlist, inWishlist, toggleCompare, inCompare } = useCommerce();
   const { settings } = useStore();
   const { open: openQuickView } = useQuickView();
   const quickView = onQuickView ?? openQuickView;
   const saved = inWishlist(product.id);
   const comparing = inCompare(product.id);
-  const dv = defaultVariant(product);
   const discount = discountPercent(product.price, product.salePrice);
-  const soldOut = product.stock <= 0 && !product.affiliate;
+  const soldOut = product.stock <= 0 && !product.affiliate && product.type !== 'digital';
 
   const handleToggleWishlist = useCallback(() => toggleWishlist(product.id), [toggleWishlist, product.id]);
   const handleToggleCompare = useCallback(() => toggleCompare(product.id), [toggleCompare, product.id]);
-  const handleAddToCart = useCallback(
-    () => addToCart(product.id, dv.key, dv.label, 1, true),
-    [addToCart, product.id, dv.key, dv.label]
-  );
   const handleQuickView = useCallback(() => quickView(product), [quickView, product]);
 
   return (
@@ -73,7 +61,6 @@ const ProductCardInner = memo(function ProductCardInner({ product, onQuickView }
           {product.isNew && <Badge variant="new">New</Badge>}
           {product.bestSeller && <Badge variant="bestseller">Bestseller</Badge>}
           {product.type === "digital" && <Badge variant="digital">Digital</Badge>}
-          {product.affiliate && <Badge variant="affiliate">Affiliate</Badge>}
           {soldOut && <Badge variant="neutral">Sold out</Badge>}
           {!soldOut && product.stock > 0 && product.stock <= 8 && product.type !== "digital" && (
             <Badge variant="lowstock">Only {product.stock} left</Badge>
@@ -112,16 +99,10 @@ const ProductCardInner = memo(function ProductCardInner({ product, onQuickView }
 
         {/* Quick action */}
         <div className="absolute inset-x-3 bottom-3 flex translate-y-3 flex-col gap-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
-          {product.affiliate ? (
-            <a href={product.affiliateUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" className="btn-dark btn-md w-full">
-              Shop partner <ArrowUpRight className="h-4 w-4" />
-            </a>
-          ) : (
-            <button type="button" disabled={soldOut} onClick={handleAddToCart} className="btn-primary btn-md w-full">
-              <ShoppingBag className="h-4 w-4" />
-              {soldOut ? "Sold out" : product.type === "digital" ? "Get it now" : "Add to bag"}
-            </button>
-          )}
+          <Link to={`/product/${product.slug}`} className="btn-primary btn-md w-full">
+            <ShoppingBag className="h-4 w-4" />
+            View options
+          </Link>
           <button type="button" onClick={handleQuickView} className="btn-ghost btn-sm w-full bg-white/70 text-ink backdrop-blur hover:bg-white">
             Quick view
           </button>

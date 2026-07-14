@@ -1,282 +1,452 @@
 /**
- * ALAYA INSIDER — Affiliate Analytics Dashboard (Part 3.4)
- * -----------------------------------------------------------
- * Enterprise affiliate performance tracking: clicks, conversions, commissions,
- * geo-routing analytics, partner rankings, and optimization insights.
+ * ALAYA INSIDER — Affiliate Analytics Dashboard (V6)
+ * --------------------------------------------------------------------------
+ * Enterprise analytics dashboard for the Global Affiliate Engine.
+ * Displays real-time click/conversion/revenue data from PostgreSQL
+ * via the backend API, with interactive charts, filters, and CSV export.
  */
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
-  TrendingUp,
-  TrendingDown,
-  ExternalLink,
-  ShoppingBag,
-  MousePointerClick,
-  DollarSign,
-  Percent,
-  Globe,
-  ArrowRight,
-  Handshake,
-  Sparkles,
-  Eye,
+  BarChart3, TrendingUp, DollarSign, MousePointerClick,
+  Globe, Smartphone, Monitor, Calendar,
+  ArrowUpRight, ArrowDownRight,
 } from "lucide-react";
-import { useStore } from "../../context/StoreContext";
 import { Seo } from "../../components/Seo";
-import { Badge } from "../../components/ui";
 import { cn } from "@/utils/cn";
+import { fetchAffiliateAnalytics, fetchClickStats } from "../../lib/affiliateApi";
+import { getMerchantAnalytics, getMerchantClickEvents } from "../../lib/affiliateCommerce";
 
-/* ------------------------------------------------------------------ */
-/*  Analytics data derived from live store state                       */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
+/*  STAT CARD                                                          */
+/* ================================================================== */
 
-interface AffiliateMetric {
-  label: string;
-  value: string;
-  change: number;
-  trend: "up" | "down";
-  icon: typeof TrendingUp;
+function StatCard({ label, value, sub, icon: Icon, trend }: {
+  label: string; value: string; sub?: string; icon: any; trend?: { value: number; positive: boolean };
+}) {
+  return (
+    <div className="card p-4 transition-all hover:shadow-[var(--shadow-card)]">
+      <div className="flex items-start justify-between">
+        <div className="min-w-0">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted">{label}</p>
+          <p className="mt-1.5 text-2xl font-bold text-ink tabular-nums">{value}</p>
+          {sub && <p className="mt-0.5 text-xs text-muted">{sub}</p>}
+          {trend && (
+            <p className={cn("mt-1 flex items-center gap-0.5 text-xs font-medium", trend.positive ? "text-success" : "text-danger")}>
+              {trend.positive ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+              {Math.abs(trend.value)}% {trend.positive ? "increase" : "decrease"}
+            </p>
+          )}
+        </div>
+        <div className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-accent-soft/40">
+          <Icon className="h-5 w-5 text-accent" />
+        </div>
+      </div>
+    </div>
+  );
 }
 
-interface PartnerPerformance {
-  id: string;
-  name: string;
-  products: number;
-  clicks: number;
-  conversions: number;
-  conversionRate: number;
-  revenue: number;
-  commission: number;
-  avgOrderValue: number;
-  topProduct: string;
-  regions: string[];
+/* ================================================================== */
+/*  TABLE COMPONENT                                                    */
+/* ================================================================== */
+
+function AnalyticsTable({ columns, rows, className }: {
+  columns: { key: string; label: string; align?: "left" | "right" }[];
+  rows: Record<string, any>[];
+  className?: string;
+}) {
+  return (
+    <div className={cn("overflow-hidden rounded-xl border border-line", className)}>
+      <table className="w-full text-sm">
+        <thead className="bg-surface2/60">
+          <tr className="text-left text-xs font-semibold uppercase tracking-wider text-muted">
+            {columns.map((col) => (
+              <th key={col.key} className={cn("px-4 py-3", col.align === "right" && "text-right")}>{col.label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-line">
+          {rows.length === 0 ? (
+            <tr>
+              <td colSpan={columns.length} className="px-4 py-10 text-center text-sm text-muted">
+                No data available yet. Start tracking affiliate clicks to see analytics.
+              </td>
+            </tr>
+          ) : (
+            rows.map((row, i) => (
+              <tr key={i} className="transition-colors hover:bg-surface/60">
+                {columns.map((col) => (
+                  <td key={col.key} className={cn("px-4 py-3", col.align === "right" && "text-right")}>
+                    {row[col.key] ?? "—"}
+                  </td>
+                ))}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
 }
 
-/* ------------------------------------------------------------------ */
-/*  Page                                                              */
-/* ------------------------------------------------------------------ */
+/* ================================================================== */
+/*  PAGE                                                               */
+/* ================================================================== */
 
 export default function AdminAffiliateAnalytics() {
-  const { products, affiliates } = useStore();
-  const [selectedPartner, setSelectedPartner] = useState<string | null>(null);
-  const [period, setPeriod] = useState<"7d" | "30d" | "90d">("30d");
+  const [days, setDays] = useState(30);
+  const [loading, setLoading] = useState(false);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [clickStats, setClickStats] = useState<any>(null);
 
-  const affiliateProducts = useMemo(() => products.filter((p) => p.affiliate), [products]);
-  const totalAffiliateRevenue = useMemo(() => affiliateProducts.reduce((s, p) => s + (p.salePrice ?? p.price), 0), [affiliateProducts]);
-  const activeAffiliates = useMemo(() => affiliates.filter((a) => a.active), [affiliates]);
-  const avgCommission = useMemo(() => activeAffiliates.length ? Math.round(activeAffiliates.reduce((s, a) => s + a.commission, 0) / activeAffiliates.length) : 0, [activeAffiliates]);
+  // Fetch analytics from backend API
+  const loadAnalytics = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [apiData, clicks] = await Promise.all([
+        fetchAffiliateAnalytics(days),
+        fetchClickStats(days),
+      ]);
+      if (apiData) setAnalytics(apiData);
+      if (clicks) setClickStats(clicks);
+    } catch { /* silent */ }
+    setLoading(false);
+  }, [days]);
 
-  // Deterministic estimate based on product count and partner commission rates
-  const partnerEstimate = useMemo(() => {
-    const baseClicks = affiliateProducts.length * 620;
-    const baseConversions = Math.round(baseClicks * 0.045);
-    const baseRevenue = affiliateProducts.reduce((s, p) => s + (p.salePrice ?? p.price), 0) * 12;
-    return { clicks: baseClicks, conversions: baseConversions, revenue: baseRevenue };
-  }, [affiliateProducts]);
+  useEffect(() => { loadAnalytics(); }, [loadAnalytics]);
 
-  // Compute metrics from live store data
-  const METRICS: AffiliateMetric[] = useMemo(() => [
-    { label: "Affiliate Products", value: String(affiliateProducts.length), change: activeAffiliates.length > 0 ? 12.5 : 0, trend: "up", icon: ShoppingBag },
-    { label: "Commission Rate", value: `${avgCommission}%`, change: avgCommission > 0 ? 8.3 : 0, trend: "up", icon: Percent },
-    { label: "Total Clicks", value: partnerEstimate.clicks.toLocaleString(), change: partnerEstimate.clicks > 0 ? 15.2 : 0, trend: "up", icon: MousePointerClick },
-    { label: "Active Partners", value: String(activeAffiliates.length), change: 0, trend: "up", icon: Handshake },
-    { label: "Avg Commission", value: `${avgCommission}%`, change: avgCommission > 0 ? 3.1 : 0, trend: "up", icon: DollarSign },
-    { label: "Catalogue Value", value: `$${totalAffiliateRevenue.toLocaleString()}`, change: totalAffiliateRevenue > 0 ? 5.0 : 0, trend: "up", icon: TrendingUp },
-  ], [affiliateProducts.length, activeAffiliates.length, avgCommission, partnerEstimate, totalAffiliateRevenue]);
+  // Also load local analytics for comparison
+  const localAnalytics = useMemo(() => getMerchantAnalytics(days), [days]);
+  const clickEvents = useMemo(() => getMerchantClickEvents(days), [days]);
 
-  // Build partner data from live affiliates using deterministic estimates
-  const PARTNERS: PartnerPerformance[] = useMemo(() => activeAffiliates.map((a) => {
-    const partnerProducts = affiliateProducts.filter((p) => p.affiliatePartner === a.name || p.affiliateNetwork === a.name);
-    const prodCount = partnerProducts.length || 1;
-    const share = prodCount / Math.max(1, affiliateProducts.length);
+  // Summary stats — prefer API data, fallback to local
+  const stats = useMemo(() => {
+    const api = analytics;
+    const local = localAnalytics;
+
     return {
-      id: a.id,
-      name: a.name,
-      products: prodCount,
-      clicks: Math.round(partnerEstimate.clicks * share),
-      conversions: Math.round(partnerEstimate.conversions * share),
-      conversionRate: 4.0 + (a.commission * 0.15),
-      revenue: Math.round(partnerEstimate.revenue * share),
-      commission: Math.round(a.commission * partnerEstimate.revenue * share / 100),
-      avgOrderValue: Math.round(220 + a.commission * 5),
-      topProduct: partnerProducts[0]?.name || affiliateProducts[0]?.name || "N/A",
-      regions: a.name === "NET-A-PORTER" || a.name === "SSENSE" ? ["US", "UK", "EU"] : ["US", "UK", "EU", "AU"],
+      totalClicks: api?.clicks?.total_clicks ?? local.totalClicks ?? 0,
+      totalConversions: api?.conversions?.total_conversions ?? 0,
+      totalRevenue: api?.conversions?.total_sales ?? local.totalRevenue ?? 0,
+      totalCommission: api?.conversions?.total_commission ?? local.totalCommission ?? 0,
+      avgOrderValue: api?.conversions?.avg_order_value ?? 0,
+      avgCommissionRate: api?.conversions?.avg_commission_rate ?? 0,
+      conversionRate: api?.conversions?.total_conversions > 0
+        ? Math.round((api.conversions.total_conversions / (api.clicks?.total_clicks || 1)) * 10000) / 100
+        : local.conversionRate ?? 0,
+      ctr: local.overallCTR ?? 0,
+      topMerchants: local.topMerchants ?? [],
+      topCountries: local.topCountries ?? [],
+      dailyConversions: api?.daily ?? [],
     };
-  }), [activeAffiliates, affiliateProducts, partnerEstimate]);
+  }, [analytics, localAnalytics]);
 
-  // Build geo data from live store configuration
-  const REGIONS = useMemo(() => [
-    { region: "United States", flag: "🇺🇸", revenue: Math.round(totalAffiliateRevenue * 0.48), clicks: Math.round(partnerEstimate.clicks * 0.45), partners: activeAffiliates.length, conversion: 4.8 },
-    { region: "United Kingdom", flag: "🇬🇧", revenue: Math.round(totalAffiliateRevenue * 0.22), clicks: Math.round(partnerEstimate.clicks * 0.22), partners: activeAffiliates.length, conversion: 4.5 },
-    { region: "European Union", flag: "🇪🇺", revenue: Math.round(totalAffiliateRevenue * 0.18), clicks: Math.round(partnerEstimate.clicks * 0.18), partners: activeAffiliates.length, conversion: 4.3 },
-    { region: "Australia", flag: "🇦🇺", revenue: Math.round(totalAffiliateRevenue * 0.07), clicks: Math.round(partnerEstimate.clicks * 0.08), partners: activeAffiliates.length, conversion: 3.9 },
-    { region: "Canada", flag: "🇨🇦", revenue: Math.round(totalAffiliateRevenue * 0.05), clicks: Math.round(partnerEstimate.clicks * 0.07), partners: activeAffiliates.length, conversion: 3.7 },
-  ], [totalAffiliateRevenue, partnerEstimate, activeAffiliates.length]);
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2 }).format(val);
+
+  const formatNumber = (val: number) =>
+    new Intl.NumberFormat("en-US").format(val);
+
+  // Top merchants table data
+  const topMerchantRows = useMemo(() =>
+    stats.topMerchants.slice(0, 15).map((m: any) => ({
+      merchant: m.merchantName || m.merchantId,
+      clicks: formatNumber(m.clicks),
+      impressions: formatNumber(m.impressions),
+      ctr: `${m.ctr}%`,
+      revenue: formatCurrency(m.revenue),
+      commission: formatCurrency(m.commission),
+      epc: formatCurrency(m.epc),
+    })),
+  [stats.topMerchants]);
+
+  // Top countries table data
+  const topCountryRows = useMemo(() =>
+    stats.topCountries.slice(0, 10).map((c: any) => ({
+      country: c.country,
+      clicks: formatNumber(c.clicks),
+      revenue: formatCurrency(c.revenue),
+    })),
+  [stats.topCountries]);
 
   return (
     <>
       <Seo title="Affiliate Analytics" path="/admin/affiliate-analytics" />
       <div className="p-5 pb-28 sm:p-8">
+        {/* Header */}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-3xl font-semibold text-ink">Affiliate Analytics</h1>
-            <p className="mt-1 text-sm text-muted">Performance metrics, commission reports, and geo-routing data across your affiliate network.</p>
+            <p className="mt-1 text-sm text-muted">Real-time performance metrics for the Global Affiliate Engine.</p>
           </div>
-          <div className="flex gap-2">
-            {(["7d", "30d", "90d"] as const).map((p) => (
-              <button key={p} onClick={() => setPeriod(p)} className={cn("btn-sm", period === p ? "btn-primary" : "btn-ghost")}>{p}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* Metrics grid */}
-        <div className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-          {METRICS.map((m) => {
-            const Icon = m.icon;
-            return (
-              <div key={m.label} className="card p-4">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
-                  <Icon className="h-3.5 w-3.5" /> {m.label}
-                </div>
-                <p className="mt-2 text-2xl font-semibold text-ink">{m.value}</p>
-                <span className={cn("inline-flex items-center gap-0.5 text-xs font-medium", m.trend === "up" ? "text-success" : "text-danger")}>
-                  {m.trend === "up" ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
-                  {Math.abs(m.change)}% vs previous {period}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        <div className="mt-8 grid gap-8 lg:grid-cols-3">
-          {/* Partner Performance */}
-          <div className="lg:col-span-2">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-ink mb-4">
-              <Handshake className="h-5 w-5 text-accent" /> Partner Performance
-            </h2>
-            <div className="space-y-3">
-              {PARTNERS.map((partner) => (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={loadAnalytics}
+              disabled={loading}
+              className="btn-ghost btn-md"
+            >
+              <BarChart3 className="h-4 w-4" />
+              {loading ? "Loading..." : "Refresh"}
+            </button>
+            <div className="flex rounded-lg border border-line overflow-hidden">
+              {[7, 30, 90].map((d) => (
                 <button
-                  key={partner.id}
-                  onClick={() => setSelectedPartner(selectedPartner === partner.id ? null : partner.id)}
-                  className={cn("card w-full p-4 text-left transition-all", selectedPartner === partner.id && "ring-2 ring-accent")}
+                  key={d}
+                  onClick={() => setDays(d)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs font-medium transition-colors",
+                    days === d ? "bg-accent text-white" : "text-muted hover:bg-surface2",
+                  )}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="grid h-10 w-10 place-items-center rounded-full bg-accent-soft text-sm font-semibold text-accent">{partner.name.slice(0, 2)}</span>
-                      <div>
-                        <h3 className="font-semibold text-ink">{partner.name}</h3>
-                        <span className="text-xs text-muted">{partner.products} linked products · {partner.regions.join(", ")}</span>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-semibold text-ink">${partner.revenue.toLocaleString()}</p>
-                      <p className="text-xs text-muted">{partner.conversionRate}% conv.</p>
-                    </div>
-                  </div>
-                  <div className="mt-3 grid grid-cols-3 gap-3 border-t border-line pt-3 text-xs text-muted">
-                    <div><span className="block font-medium text-ink">{partner.clicks.toLocaleString()}</span>Clicks</div>
-                    <div><span className="block font-medium text-ink">{partner.conversions}</span>Conversions</div>
-                    <div><span className="block font-medium text-ink">${partner.commission.toLocaleString()}</span>Commission</div>
-                  </div>
+                  {d}d
                 </button>
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Geo Distribution */}
-          <div>
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-ink mb-4">
-              <Globe className="h-5 w-5 text-accent" /> Geo Distribution
-            </h2>
-            <div className="card p-4">
+        {/* Key Metrics */}
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <StatCard
+            label="Total Clicks"
+            value={formatNumber(stats.totalClicks)}
+            sub="All affiliate links"
+            icon={MousePointerClick}
+          />
+          <StatCard
+            label="Conversions"
+            value={formatNumber(stats.totalConversions)}
+            sub={`${stats.conversionRate}% conversion rate`}
+            icon={TrendingUp}
+          />
+          <StatCard
+            label="Revenue"
+            value={formatCurrency(stats.totalRevenue)}
+            sub={`${formatCurrency(stats.avgOrderValue)} AOV`}
+            icon={DollarSign}
+          />
+          <StatCard
+            label="Commission"
+            value={formatCurrency(stats.totalCommission)}
+            sub={`${stats.avgCommissionRate}% avg rate`}
+            icon={DollarSign}
+          />
+          <StatCard
+            label="CTR"
+            value={`${stats.ctr}%`}
+            sub="Click-through rate"
+            icon={BarChart3}
+          />
+          <StatCard
+            label="EPC"
+            value={stats.topMerchants.length > 0 ? formatCurrency(stats.topMerchants[0]?.epc || 0) : "$0.00"}
+            sub="Earnings per click"
+            icon={TrendingUp}
+          />
+        </div>
+
+        {/* Charts Row */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          {/* Daily Conversions Chart */}
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-ink">Daily Conversions</h3>
+              <Calendar className="h-4 w-4 text-muted" />
+            </div>
+            {stats.dailyConversions.length > 0 ? (
+              <div className="flex items-end gap-1 h-32" role="img" aria-label="Daily conversions chart">
+                {stats.dailyConversions.slice(-30).map((d: any, i: number) => {
+                  const maxVal = Math.max(...stats.dailyConversions.slice(-30).map((x: any) => Number(x.count || x.total_sales || 0)), 1);
+                  const val = Number(d.count || d.total_sales || 0);
+                  const height = (val / maxVal) * 100;
+                  return (
+                    <div key={i} className="flex flex-1 flex-col items-center gap-0.5">
+                      <div
+                        className="w-full rounded-t bg-accent/50 transition-all hover:bg-accent"
+                        style={{ height: `${Math.max(height, 3)}%` }}
+                        title={`${d.date || d.day || ""}: ${val}`}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex h-32 items-center justify-center text-sm text-muted">
+                No daily conversion data yet
+              </div>
+            )}
+          </div>
+
+          {/* Device Breakdown */}
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-ink">Device Breakdown</h3>
+              <Globe className="h-4 w-4 text-muted" />
+            </div>
+            {clickStats?.byDevice && clickStats.byDevice.length > 0 ? (
               <div className="space-y-3">
-                {REGIONS.map((r) => (
-                  <div key={r.region} className="border-b border-line pb-3 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-sm font-medium text-ink">
-                        <span>{r.flag}</span> {r.region}
-                      </span>
-                      <span className="text-xs text-muted">{r.conversion}% conv.</span>
+                {clickStats.byDevice.slice(0, 5).map((d: any, i: number) => {
+                  const total = clickStats.byDevice.reduce((s: number, x: any) => s + Number(x.count || 0), 0) || 1;
+                  const pct = Math.round((Number(d.count || 0) / total) * 100);
+                  return (
+                    <div key={i}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="flex items-center gap-2 text-ink">
+                          {d.device_type === "mobile" ? <Smartphone className="h-3.5 w-3.5" /> : <Monitor className="h-3.5 w-3.5" />}
+                          {d.device_type || d.device || "Unknown"}
+                        </span>
+                        <span className="text-xs text-muted">{pct}% ({formatNumber(Number(d.count || 0))})</span>
+                      </div>
+                      <div className="h-2 w-full rounded-full bg-surface2 overflow-hidden">
+                        <div className="h-full rounded-full bg-accent transition-all" style={{ width: `${pct}%` }} />
+                      </div>
                     </div>
-                    <div className="mt-1.5 h-2 w-full rounded-full bg-surface2">
-                      <div className="h-2 rounded-full bg-accent" style={{ width: `${(r.revenue / Math.max(...REGIONS.map((x) => x.revenue), 1)) * 100}%` }} />
-                    </div>
-                    <div className="mt-1 flex justify-between text-xs text-muted">
-                      <span>${r.revenue.toLocaleString()}</span>
-                      <span>{r.clicks.toLocaleString()} clicks</span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="flex h-32 items-center justify-center text-sm text-muted">
+                <div className="text-center">
+                  <Monitor className="mx-auto h-8 w-8 mb-2 opacity-40" />
+                  No device data yet
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Top Merchants Table */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-accent" />
+              Top Merchants
+            </h3>
+            <span className="text-xs text-muted">{stats.topMerchants.length} merchants with data</span>
+          </div>
+          <AnalyticsTable
+            columns={[
+              { key: "merchant", label: "Merchant" },
+              { key: "clicks", label: "Clicks", align: "right" },
+              { key: "impressions", label: "Impressions", align: "right" },
+              { key: "ctr", label: "CTR", align: "right" },
+              { key: "revenue", label: "Revenue", align: "right" },
+              { key: "commission", label: "Commission", align: "right" },
+              { key: "epc", label: "EPC", align: "right" },
+            ]}
+            rows={topMerchantRows}
+          />
+        </div>
+
+        {/* Countries & Recent Clicks */}
+        <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          {/* Top Countries */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+                <Globe className="h-4 w-4 text-accent" />
+                Top Countries
+              </h3>
+            </div>
+            <AnalyticsTable
+              columns={[
+                { key: "country", label: "Country" },
+                { key: "clicks", label: "Clicks", align: "right" },
+                { key: "revenue", label: "Revenue", align: "right" },
+              ]}
+              rows={topCountryRows}
+            />
+          </div>
+
+          {/* Recent Click Events */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-ink flex items-center gap-2">
+                <MousePointerClick className="h-4 w-4 text-accent" />
+                Recent Clicks
+              </h3>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-line max-h-[400px] overflow-y-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-surface2/60 sticky top-0">
+                  <tr className="text-left text-xs font-semibold uppercase tracking-wider text-muted">
+                    <th className="px-4 py-3">Merchant</th>
+                    <th className="px-4 py-3">Product</th>
+                    <th className="px-4 py-3 text-right">Price</th>
+                    <th className="px-4 py-3 text-right hidden sm:table-cell">Country</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-line">
+                  {clickEvents.slice(0, 50).map((c: any) => (
+                    <tr key={c.id} className="transition-colors hover:bg-surface/60">
+                      <td className="px-4 py-2.5 text-sm text-ink">{c.merchantName || c.merchantId}</td>
+                      <td className="px-4 py-2.5 text-sm text-muted max-w-[160px] truncate">{c.productName || c.productId}</td>
+                      <td className="px-4 py-2.5 text-right text-sm tabular-nums text-ink">${c.price?.toFixed(2) || "—"}</td>
+                      <td className="px-4 py-2.5 text-right text-sm text-muted hidden sm:table-cell">{c.country || "—"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {clickEvents.length === 0 && (
+                <div className="px-4 py-10 text-center text-sm text-muted">
+                  No recent click events. Merchants haven't been clicked yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Health Summary */}
+        {analytics?.health && (
+          <div className="mt-8 card p-5">
+            <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
+              <BarChart3 className="h-4 w-4 text-accent" />
+              Link Health Summary
+            </h3>
+            <div className="grid grid-cols-4 gap-4 text-sm">
+              <div>
+                <p className="text-muted">Total Checks</p>
+                <p className="text-lg font-bold text-ink">{formatNumber(analytics.health.total_checks)}</p>
+              </div>
+              <div>
+                <p className="text-muted">Healthy</p>
+                <p className="text-lg font-bold text-success">{formatNumber(analytics.health.healthy_count)}</p>
+              </div>
+              <div>
+                <p className="text-muted">Broken</p>
+                <p className="text-lg font-bold text-danger">{formatNumber(analytics.health.broken_count)}</p>
+              </div>
+              <div>
+                <p className="text-muted">Avg Response</p>
+                <p className="text-lg font-bold text-ink">{analytics.health.avg_response_time || 0}ms</p>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Quick stats */}
-            <div className="card mt-4 p-4">
-              <h3 className="text-sm font-semibold text-ink mb-3">Network Overview</h3>
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm"><span className="text-muted">Affiliate products</span><span className="font-medium text-ink">{affiliateProducts.length}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-muted">Active partners</span><span className="font-medium text-ink">{affiliates.filter((a) => a.active).length}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-muted">Total catalogue value</span><span className="font-medium text-ink">${totalAffiliateRevenue.toLocaleString()}</span></div>
-                <div className="flex justify-between text-sm"><span className="text-muted">Avg commission rate</span><span className="font-medium text-ink">{affiliates.length ? Math.round(affiliates.reduce((s, a) => s + a.commission, 0) / affiliates.length) : 0}%</span></div>
+        {/* Totals summary */}
+        {analytics?.totals && (
+          <div className="mt-4 card p-5">
+            <h3 className="text-sm font-semibold text-ink flex items-center gap-2 mb-4">
+              <Globe className="h-4 w-4 text-accent" />
+              Platform Totals
+            </h3>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <p className="text-muted">Networks</p>
+                <p className="text-lg font-bold text-ink">{analytics.totals.totalNetworks}</p>
               </div>
-              <Link to="/admin/affiliates" className="btn-outline btn-sm mt-4 w-full">Manage partners <ArrowRight className="h-4 w-4" /></Link>
+              <div>
+                <p className="text-muted">Accounts</p>
+                <p className="text-lg font-bold text-ink">{analytics.totals.totalAccounts}</p>
+              </div>
+              <div>
+                <p className="text-muted">Active Links</p>
+                <p className="text-lg font-bold text-ink">{analytics.totals.totalLinks}</p>
+              </div>
             </div>
           </div>
-        </div>
-
-        {/* Optimisation Insights */}
-        <div className="mt-8">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-ink mb-4">
-            <Sparkles className="h-5 w-5 text-accent" /> Optimisation Insights
-          </h2>
-          <div className="card p-4">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {[
-                { title: "Low Conversion Rate", detail: "Canada & Australia show room for improvement — consider localised landing pages.", impact: "medium", action: "Add region-specific product recommendations" },
-                { title: "Top Performer", detail: "NET-A-PORTER drives 48.5% of total affiliate revenue — review for upsell opportunities.", impact: "high", action: "Explore tiered commission structure" },
-                { title: "Gap Opportunity", detail: "No affiliate partner covering Asia — consider expanding into Japan and Singapore markets.", impact: "high", action: "Recruit APAC-based partners" },
-                { title: "Link Optimisation", detail: "3 affiliate products have no tracked clicks — review link placement and CTAs.", impact: "medium", action: "Update product page affiliate placements" },
-              ].map((insight) => (
-                <div key={insight.title} className="rounded-xl border border-line p-3">
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <span className={cn("h-2 w-2 rounded-full", insight.impact === "high" ? "bg-danger" : "bg-amber-500")} />
-                    <span className="text-xs font-semibold text-ink">{insight.title}</span>
-                  </div>
-                  <p className="text-xs text-muted">{insight.detail}</p>
-                  <p className="mt-2 text-[0.6rem] font-semibold uppercase tracking-wider text-accent">{insight.action}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Top Products */}
-        <div className="mt-8">
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-ink mb-4">
-            <ShoppingBag className="h-5 w-5 text-accent" /> Top Affiliate Products
-          </h2>
-          <div className="space-y-2">
-            {affiliateProducts.slice(0, 6).map((p) => (
-              <Link key={p.id} to={`/product/${p.slug}`} className="card flex items-center gap-3 p-3 transition-colors hover:border-accent">
-                <img src={p.images[0]} alt={p.name} className="h-14 w-12 rounded-lg object-cover" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate font-medium text-ink">{p.name}</p>
-                    {p.affiliatePartner && <Badge variant="affiliate">{p.affiliatePartner}</Badge>}
-                  </div>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted">
-                    <span>${p.salePrice ?? p.price}</span>
-                    {p.affiliateCommission && <span>{p.affiliateCommission}% commission</span>}
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" /> {Math.round((affiliateProducts.indexOf(p) + 1) * 250)} clicks
-                    </span>
-                  </div>
-                </div>
-                <ExternalLink className="h-4 w-4 shrink-0 text-muted" />
-              </Link>
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     </>
   );

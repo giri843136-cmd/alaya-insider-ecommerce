@@ -67,12 +67,50 @@ function epochToTimestamp(epoch: number): string {
   return new Date(epoch).toISOString();
 }
 
-function ensureId(item: any, prefix = "seed"): string {
-  return item.id || uuidv4();
+/** Validate a string is a proper UUID v4 */
+function isValidUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
 }
 
 function ensureSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+/* Cache category and brand lookups to avoid repeated DB queries */
+let _categoryNameMap: Record<string, string> | null = null;
+let _brandNameMap: Record<string, string> | null = null;
+
+async function getCategoryIdByName(name: string): Promise<string | null> {
+  if (!_categoryNameMap) {
+    _categoryNameMap = {};
+    const rows = await queryAll<{ id: string; name: string; slug: string }>(
+      "SELECT id, name, slug FROM categories",
+    );
+    for (const row of rows) {
+      _categoryNameMap[row.name.toLowerCase()] = row.id;
+      _categoryNameMap[row.slug.toLowerCase()] = row.id;
+    }
+  }
+  return _categoryNameMap[name.toLowerCase()] || null;
+}
+
+async function getBrandIdByName(name: string): Promise<string | null> {
+  if (!_brandNameMap) {
+    _brandNameMap = {};
+    const rows = await queryAll<{ id: string; name: string; slug: string }>(
+      "SELECT id, name, slug FROM brands",
+    );
+    for (const row of rows) {
+      _brandNameMap[row.name.toLowerCase()] = row.id;
+      _brandNameMap[row.slug.toLowerCase()] = row.id;
+    }
+  }
+  return _brandNameMap[name.toLowerCase()] || null;
+}
+
+function clearLookupCaches() {
+  _categoryNameMap = null;
+  _brandNameMap = null;
 }
 
 /* ================================================================== */
@@ -86,10 +124,25 @@ async function seedProducts(products: any[]): Promise<MigrationResult> {
 
   for (const p of (products || [])) {
     try {
-      const existing = await queryOne("SELECT id FROM products WHERE slug = $1", [p.slug || ensureSlug(p.name)]);
+      const slug = p.slug || ensureSlug(p.name);
+      const existing = await queryOne("SELECT id FROM products WHERE slug = $1", [slug]);
       if (existing) { skipped++; continue; }
 
-      const productId = p.id || uuidv4();
+      // Always use a proper UUID for the product ID
+      const productId = uuidv4();
+      
+      // Look up category UUID by name/slug instead of using non-UUID string
+      const categoryName = p.category || "uncategorized";
+      const categoryId = await getCategoryIdByName(categoryName);
+      if (!categoryId) {
+        console.warn(`[SEED] Skipping product "${p.name}" — no matching category "${categoryName}"`);
+        skipped++;
+        continue;
+      }
+      
+      // Look up brand UUID by name
+      const brandName = p.brand || p.brandId || "";
+      const brandId = brandName ? await getBrandIdByName(brandName) : null;
       await query(
         `INSERT INTO products (id, slug, name, brand, brand_id, category_id, type, price, sale_price, cost_price, 
           rating, review_count, images, short_description, description, features, variants, stock, sku, tags,
@@ -98,11 +151,11 @@ async function seedProducts(products: any[]): Promise<MigrationResult> {
           created_at, updated_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38,$39)`,
         [
-          productId, p.slug || ensureSlug(p.name), p.name, p.brand || "", p.brandId || null,
-          p.category || "uncategorized", p.type || "physical", p.price ?? 0, p.salePrice ?? null, p.costPrice ?? null,
-          p.rating ?? 0, p.reviewCount ?? 0, JSON.stringify(p.images || []), p.shortDescription || "",
-          p.description || "", JSON.stringify(p.features || []), JSON.stringify(p.variants || []),
-          p.stock ?? 0, p.sku || "", JSON.stringify(p.tags || []),
+          productId, slug, p.name, p.brand || "", brandId,
+          categoryId, p.type || "physical", p.price ?? 0, p.salePrice ?? null, p.costPrice ?? null,
+          p.rating ?? 0, p.reviewCount ?? 0, p.images || [], p.shortDescription || "",
+          p.description || "", p.features || [], JSON.stringify(p.variants || []),
+          p.stock ?? 0, p.sku || "", p.tags || [],
           p.barcode || null, p.gtin || null, p.asin || null, p.supplierId || null,
           p.affiliate ?? false, p.affiliateUrl || null, p.affiliatePartner || null, p.affiliateNetwork || null,
           p.affiliateCommission ?? null, p.featured ?? false, p.bestSeller ?? false,
@@ -132,10 +185,11 @@ async function seedCategories(categories: any[]): Promise<MigrationResult> {
       const existing = await queryOne("SELECT id FROM categories WHERE slug = $1", [slug]);
       if (existing) { skipped++; continue; }
 
+          const catId = uuidv4();
       await query(
         `INSERT INTO categories (id, slug, name, tagline, description, image, created_at, updated_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-        [c.id || uuidv4(), slug, c.name, c.tagline || "", c.description || "", c.image || "", now(), now()],
+        [catId, slug, c.name, c.tagline || "", c.description || "", c.image || "", now(), now()],
       );
       inserted++;
     } catch (err) {
@@ -157,10 +211,11 @@ async function seedBrands(brands: any[]): Promise<MigrationResult> {
       const existing = await queryOne("SELECT id FROM brands WHERE slug = $1", [slug]);
       if (existing) { skipped++; continue; }
 
+          const brandId = uuidv4();
       await query(
         `INSERT INTO brands (id, slug, name, tagline, description, image, logo, website, instagram, country, featured, created_at, updated_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
-        [b.id || uuidv4(), slug, b.name, b.tagline || "", b.description || "", b.image || "",
+        [brandId, slug, b.name, b.tagline || "", b.description || "", b.image || "",
          b.logo || null, b.website || null, b.instagram || null, b.country || "Global",
          b.featured ?? false, now(), now()],
       );
@@ -643,6 +698,9 @@ export async function runSeedMigration(seedData: SeedStoreData): Promise<{
   const beforeCounts = await getRowsBefore();
 
   const results: MigrationResult[] = [];
+
+  // Clear lookup caches before starting
+  clearLookupCaches();
 
   // Run migrations sequentially (some depend on others for FK references)
   results.push(await seedCategories(seedData.categories || []));

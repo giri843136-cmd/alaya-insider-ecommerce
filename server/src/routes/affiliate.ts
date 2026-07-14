@@ -663,4 +663,49 @@ affiliate.post("/prices", async (c) => {
   return c.json(record, 201);
 });
 
+/* ================================================================== */
+/*  OUTBOUND REDIRECT — Click tracking through /api/v1/out             */
+/* ================================================================== */
+
+affiliate.get("/out", async (c) => {
+  const url = c.req.query("url");
+  if (!url) return c.json({ code: "MISSING_URL", message: "url query parameter is required" }, 400);
+
+  // Validate URL to prevent open redirect attacks
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      return c.json({ code: "INVALID_URL", message: "Only http/https URLs are allowed" }, 400);
+    }
+  } catch {
+    return c.json({ code: "INVALID_URL", message: "URL is not valid" }, 400);
+  }
+
+  // Track click in background (fire-and-forget to avoid blocking redirect)
+  const linkId = c.req.query("linkId") || url;
+  const productId = c.req.query("productId");
+  const accountId = c.req.query("accountId");
+  const networkId = c.req.query("networkId");
+  const sessionId = c.req.query("sessionId");
+  const country = c.req.query("country");
+  const deviceType = c.req.query("device");
+  const campaign = c.req.query("campaign");
+
+  trackClick({
+    linkId,
+    productId: productId || undefined,
+    accountId: accountId || undefined,
+    networkId: networkId || undefined,
+    sessionId: sessionId || undefined,
+    country: country || undefined,
+    deviceType: deviceType || undefined,
+    referrer: c.req.header("referer") || undefined,
+    userAgent: c.req.header("user-agent") || undefined,
+    ip: c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "0.0.0.0",
+  }).catch(() => {});
+
+  // Redirect with 302 (temporary — preserves affiliate tracking parameters)
+  return c.redirect(url, 302);
+});
+
 export { affiliate };

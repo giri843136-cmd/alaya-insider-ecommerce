@@ -16,7 +16,7 @@ import {
 } from "../../lib/affiliateCommerce";
 
 const EMPTY_RULE: Partial<CommissionRule> = {
-  name: "", description: "", type: "percentage", value: 5, minOrderValue: 0,
+  name: "", description: "", type: "percentage", value: "5", minOrderValue: 0,
   cookieDays: 30, active: true, priority: 10,
 };
 
@@ -193,7 +193,7 @@ export default function AdminCommissionEngine() {
                     {["percentage", "fixed", "tiered"].map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
-                <div><label className="label-field">Value</label><input type="number" className="input-field" value={editing.value ?? 5} onChange={(e) => setEditing({ ...editing, value: Number(e.target.value) })} /></div>
+                <div><label className="label-field">Value</label><input type="number" className="input-field" value={editing.value ?? 5} onChange={(e) => setEditing({ ...editing, value: String(e.target.value) })} /></div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div><label className="label-field">Min order value</label><input type="number" className="input-field" value={editing.minOrderValue ?? 0} onChange={(e) => setEditing({ ...editing, minOrderValue: Number(e.target.value) })} /></div>

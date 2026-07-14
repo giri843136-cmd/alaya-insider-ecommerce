@@ -173,8 +173,8 @@ export async function seedShippingCarriers(): Promise<{
         ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21)`,
         [
           uuidv4(), c.name, c.code, c.description, c.website, c.api_docs_url,
-          c.tracking_url_template, JSON.stringify(c.supported_services),
-          JSON.stringify(c.supported_countries), c.max_weight_kg,
+          c.tracking_url_template, c.supported_services,
+          c.supported_countries, c.max_weight_kg,
           JSON.stringify(c.max_dimensions), c.api_endpoint, c.auth_type,
           c.health_check_url, c.priority, c.test_mode,
           c.requires_signature, c.insurance_available, true, now(), now(),

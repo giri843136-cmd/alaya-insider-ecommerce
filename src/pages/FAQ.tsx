@@ -78,7 +78,7 @@ export default function FAQ() {
           <Reveal>
             <span className="eyebrow mb-3">Help centre</span>
             <h1 className="font-display text-4xl font-semibold text-ink sm:text-5xl">How can we help?</h1>
-            <p className="mt-4 text-muted">Everything you need to know about shopping with {settings.storeName}. Can't find an answer? <a href="/#/contact" className="text-accent hover:underline">Contact us</a>.</p>
+            <p className="mt-4 text-muted">Everything you need to know about shopping with {settings.storeName}. Can't find an answer? <a href="https://alayainsider.com/#/contact" className="text-accent hover:underline">Contact us</a>.</p>
           </Reveal>
 
           <div className="mt-10 space-y-10">

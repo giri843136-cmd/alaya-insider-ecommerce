@@ -48,15 +48,7 @@ import {
   AiProductFAQ,
   AiBundleSuggestions,
 } from "../components/AiProductInsights";
-import {
-  GeoMarketplaceSelector,
-  PriceComparisonWidget,
-  ActiveOffers,
-} from "../components/MarketplaceSelector";
-import {
-  PriceHistoryChart,
-  PriceDropAlert,
-} from "../components/PriceIntelligence";
+import { MultiMerchantOffers, ProductIntelligence } from "../components/MarketplaceSelector";
 import { cn } from "@/utils/cn";
 import { discountPercent, formatDate, hashToIndex, isEmail, uid } from "../lib/utils";
 import type { Review } from "../lib/types";
@@ -314,16 +306,15 @@ export default function ProductDetail() {
             <ShareProduct title={product.name} />
           </div>
 
-          {/* Marketplace widgets (for affiliate products) */}
-          {product.affiliate && (
-            <div className="mt-6 space-y-4">
-              <GeoMarketplaceSelector product={product} />
-              <PriceComparisonWidget product={product} />
-              <ActiveOffers product={product} />
-              <PriceHistoryChart product={product} />
-              <PriceDropAlert product={product} />
-            </div>
-          )}
+          {/* Multi-Merchant — Available at Amazon, Walmart, Target... */}
+          <div className="mt-5">
+            <MultiMerchantOffers product={product} limit={4} />
+          </div>
+
+          {/* Price Intelligence — history + alerts for ALL products (P1 restored) */}
+          <div className="mt-5">
+            <ProductIntelligence product={product} />
+          </div>
 
           {/* AI Insights */}
           <div className="mt-6 space-y-4">

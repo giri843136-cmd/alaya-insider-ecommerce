@@ -127,6 +127,7 @@ const MERCHANT_LOGOS: Record<string, string> = {
 /*  MERCHANT DATABASE — 30 Global Retailers + Affiliate Networks      */
 /* ================================================================== */
 
+/** @deprecated Use getMerchantDataSource() or initMerchantsFromApi() instead. Hardcoded fallback — remove once API is stable. */
 export const MERCHANTS: MerchantConfig[] = [
   {
     id: "amazon", name: "Amazon", slug: "amazon", logoSvg: MERCHANT_LOGOS.amazon,
@@ -459,9 +460,51 @@ export function getGeoInfo(country?: string): GeoInfo {
 /*  MERCHANT DISCOVERY & MATCHING (P3 — no categories param)          */
 /* ================================================================== */
 
+/**
+ * Module-level cached merchants. Initialized lazily from the backend API.
+ * Falls back to hardcoded MERCHANTS array when API is unavailable.
+ */
+let _cachedMerchants: MerchantConfig[] | null = null;
+
+/**
+ * Returns the current merchant data source:
+ * 1. Cached API data (if initialized)
+ * 2. Hardcoded MERCHANTS array (development fallback)
+ */
+function getMerchantDataSource(): MerchantConfig[] {
+  if (_cachedMerchants && _cachedMerchants.length > 0) return _cachedMerchants;
+  return MERCHANTS;
+}
+
+/** @internal Promise-based lock to prevent concurrent initialization */
+let _initPromise: Promise<void> | null = null;
+
+/**
+ * Initialize merchant data from the backend API.
+ * Call this once at app startup to replace the hardcoded MERCHANTS array.
+ * Falls back silently to MERCHANTS if the API is unavailable.
+ * Safe to call multiple times — only executes once.
+ */
+export async function initMerchantsFromApi(): Promise<void> {
+  if (_cachedMerchants) return;
+  if (_initPromise) return _initPromise;
+  _initPromise = (async () => {
+    try {
+      const { fetchMerchants } = await import("./affiliateApi");
+      const merchants = await fetchMerchants();
+      if (merchants && merchants.length > 0) {
+        _cachedMerchants = merchants;
+      }
+    } catch {
+      // API unavailable — keep using hardcoded MERCHANTS fallback
+    }
+  })();
+  return _initPromise;
+}
+
 export function getMerchantsByCountry(country?: string): MerchantConfig[] {
   const code = (country || detectUserCountry()).toUpperCase();
-  return MERCHANTS
+  return getMerchantDataSource()
     .filter((m) => m.active && m.countries.includes(code))
     .sort((a, b) => a.priority - b.priority);
 }
@@ -479,7 +522,7 @@ export function getMerchantsForProduct(
   const price = product.price ?? 0;
   const isDigital = product.type === "digital";
 
-  return MERCHANTS
+  return getMerchantDataSource()
     .filter((m) => {
       if (!m.active) return false;
       if (!m.countries.includes(code)) return false;
@@ -1305,7 +1348,7 @@ export interface MarketplaceConfig {
 }
 
 export function getActiveMarketplaces(): MarketplaceConfig[] {
-  return MERCHANTS.filter((m) => m.active).map((m) => ({
+  return getMerchantDataSource().filter((m) => m.active).map((m) => ({
     id: m.id, name: m.name, type: m.isAffiliate ? "affiliate" : "direct", status: "connected",
     countries: m.countries, currencies: m.currencies, avgConversionRate: m.commissionRate / 100,
   }));

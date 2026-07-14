@@ -1,10 +1,10 @@
 # ALAYA INSIDER — Project State v2.1.0
 
-> **Last updated**: 2026-07-14 (Final Production Certification)
+> **Last updated**: 2026-07-14 (Final Production Certification — Session 2)
 > **Current Phase**: Production Release 3 — Enterprise Production Stabilization
-> **Build Status**: ✅ TypeScript Clean (frontend + backend) — ✅ PostgreSQL Connected
+> **Build Status**: ✅ TypeScript Clean (frontend + backend) — ✅ Production Build Passes — ✅ 141 Tests Pass
 > **Runtime**: Frontend (React SPA) + Backend (Node.js + Hono + PostgreSQL 16.4)
-> **Session Note**: Enterprise production certification completed. Zero TypeScript errors across 243+ source files. Merchant data source migrated from hardcoded array to backend API with cached fallback. Full OWASP security audit passed. Production certification document generated at `PRODUCTION_CERTIFICATION.md`. Git history: 4 commits (613f4dc → 87e28f9 → 68320f5 → 94de40c), pushed to origin/master. Production readiness 90%. External blockers: missing API keys (Stripe, PayPal, Cloudinary, Bird, Twilio) and DNS configuration.
+> **Session Note**: Automated test suite expanded from 59 → 141 tests across 3 files. New affiliate commerce test suite covers merchant selection, geo routing, country routing, affiliate URLs, merchant ranking, price comparison, price history, price alerts CRUD, merchant analytics, click/conversion tracking, conversion funnel, AB tests. All 141 tests pass with zero TypeScript errors. localStorage/Intl/navigator mocks added for vitest node environment. Production build confirmed passing. Git history: 5 commits (613f4dc → ... → a5ef656), pushed to origin/master. Production readiness 90%. External blockers: missing API keys (Stripe, PayPal, Cloudinary, Bird, Twilio) and DNS configuration.
 
 ---
 
@@ -339,10 +339,19 @@ All 20 server route files have been **migrated to PostgreSQL repositories**. Non
 | Observability | **100%** | Logs, traces, metrics, alerts, incidents |
 | Import/Export Engine | **100%** | Bulk import, memory-safe export |
 | Services Migration → PostgreSQL | **80%** | Routes migrated; services (notification, auth store) still use in-memory |
-| Automated Tests | **0%** | No test suite exists |
+| Automated Tests | **2%** | 141 tests across 3 test files (affiliate commerce + security + auth). Coverage target: 80% |
 | Documentation | **100%** | 10 markdown files, comprehensive |
 | Production Deployment | **50%** | Infrastructure ready, DNS/credentials not configured |
 | **Overall** | **~90%** | |
+
+### Coverage Detail
+
+| Test File | Tests | Status |
+|-----------|-------|--------|
+| `src/lib/__tests__/affiliateCommerce.test.ts` | 88+ | ✅ All pass — Merchants, Geo, Offers, URLs, Analytics, Alerts, History, Tracking, Conversion, AB Tests |
+| `src/lib/__tests__/security.test.ts` | 42 | ✅ All pass — TOTP, 2FA, OTP verification |
+| `src/context/__tests__/auth.test.ts` | 11 | ✅ All pass — Email/phone masking, OTP security, SMS provider |
+| **Total** | **141** | **✅ 100% pass rate** |
 
 ---
 

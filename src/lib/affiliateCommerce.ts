@@ -1469,7 +1469,7 @@ export function deleteMarketplace(id: string): boolean {
 export function syncMarketplace(id: string): void {
   const mp = _marketplaceStore.find((m) => m.id === id);
   if (!mp) return;
-  mp.status = "syncing" as any;
+  mp.status = "syncing";
   _syncLogStore.unshift({
     id: `sync_${Date.now()}`,
     marketplaceName: mp.name,

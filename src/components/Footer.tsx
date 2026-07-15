@@ -5,6 +5,7 @@ import { useStore } from "../context/StoreContext";
 import { useTheme } from "../context/ThemeContext";
 import { useToast } from "../context/ToastContext";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { AffiliateDisclosure } from "./AffiliateDisclosure";
 import { CURRENCIES, isEmail } from "../lib/utils";
 
 const SOCIAL_LABELS: Record<string, string> = {
@@ -192,6 +193,13 @@ export function Footer() {
               <span key={p} className="rounded-md border border-line bg-surface px-2.5 py-1 text-[0.6rem] font-bold tracking-wider text-muted">{p}</span>
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* Affiliate disclosure bar */}
+      <div className="border-t border-line bg-surface2/60">
+        <div className="container-edge py-4">
+          <AffiliateDisclosure compact />
         </div>
       </div>
     </footer>

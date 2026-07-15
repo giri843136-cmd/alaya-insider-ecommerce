@@ -339,7 +339,7 @@ function seedData() {
         { id: uid("blk"), type: "cta", props: { label: "Get Started", link: "#", variant: "hero" }, children: [] },
         { id: uid("blk"), type: "columns", props: { columns: 3, gap: "md" }, children: [] },
         { id: uid("blk"), type: "quote", props: { text: "Amazing product!", author: "Customer" }, children: [] },
-        { id: uid("blk"), type: "cta", props: { label: "Buy Now", link: "/shop", variant: "primary" }, children: [] },
+        { id: uid("blk"), type: "cta", props: { label: "View Today's Price", link: "/shop", variant: "primary" }, children: [] },
       ],
     },
     {

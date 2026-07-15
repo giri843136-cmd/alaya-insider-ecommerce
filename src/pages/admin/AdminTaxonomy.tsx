@@ -42,7 +42,7 @@ export default function AdminTaxonomy() {
             { label: "Categories", value: taxonomy.length, icon: Tags },
             { label: "Sub-topics", value: taxonomy.reduce((s, n) => s + (n.children?.length || 0), 0), icon: Hash },
             { label: "Total products", value: formatNumber(products.length), icon: Package },
-            { label: "Avg rating", value: (products.reduce((s, p) => s + (p.rating ?? 0), 0) / Math.max(1, products.length)).toFixed(1), icon: Star },
+            { label: "Avg rating", value: (products.reduce((s, p) => s + (Number(p.rating) || 0), 0) / Math.max(1, products.length)).toFixed(1), icon: Star },
           ].map((s) => (
             <div key={s.label} className="card p-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">

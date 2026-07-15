@@ -99,7 +99,7 @@ export default function Compare() {
                 </CompareRow>
 
                 <CompareRow label="Rating">
-                  {items.map((p) => <td key={p.id} className="p-4 text-center"><div className="flex flex-col items-center gap-1"><Stars rating={p.rating} /><span className="text-xs text-muted">{(p.rating ?? 0).toFixed(1)} ({p.reviewCount})</span></div></td>)}
+                  {items.map((p) => <td key={p.id} className="p-4 text-center"><div className="flex flex-col items-center gap-1"><Stars rating={p.rating} /><span className="text-xs text-muted">{(Number(p.rating) || 0).toFixed(1)} ({p.reviewCount})</span></div></td>)}
                 </CompareRow>
 
                 <CompareRow label="Type">

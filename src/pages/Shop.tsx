@@ -539,7 +539,7 @@ function ProductListRow({ product }: { product: Product }) {
         </h3>
         <p className="mt-1 line-clamp-2 text-sm text-muted">{product.shortDescription}</p>
         <div className="mt-2 flex items-center gap-3 text-xs text-muted">
-          <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-accent text-accent" strokeWidth={0} /> {(product.rating ?? 0).toFixed(1)} ({product.reviewCount})</span>
+          <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-accent text-accent" strokeWidth={0} /> {(Number(product.rating) || 0).toFixed(1)} ({product.reviewCount})</span>
           {!product.affiliate && (soldOut ? <span className="text-danger">Sold out</span> : product.stock <= 8 ? <span className="text-amber-600 dark:text-amber-400">Only {product.stock} left</span> : <span className="text-success">In stock</span>)}
         </div>
       </div>

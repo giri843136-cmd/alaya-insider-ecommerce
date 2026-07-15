@@ -146,7 +146,7 @@ export function AwardWinnersSection({ limit = 4 }: { limit?: number }) {
                     <p className="truncate font-medium">{p.name}</p>
                     <div className="mt-1 flex items-center gap-2 text-sm text-canvas/60">
                       <Stars rating={p.rating} size={12} />
-                      <span>{(p.rating ?? 0).toFixed(1)}</span>
+                      <span>{(Number(p.rating) || 0).toFixed(1)}</span>
                       <span>·</span>
                       <span>{p.reviewCount} reviews</span>
                     </div>

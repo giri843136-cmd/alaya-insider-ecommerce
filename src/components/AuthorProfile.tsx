@@ -53,7 +53,7 @@ export function AuthorProfileCard({ authorName, articles, role, className }: Aut
         <div className="mt-4 grid grid-cols-3 gap-3 text-center">
           <Stat value={formatCompact(profile.articleCount)} label="Articles" />
           <Stat value={formatCompact(profile.totalViews)} label="Views" />
-          <Stat value={profile.avgRating.toFixed(1)} label="Rating" />
+          <Stat value={(Number(profile.avgRating) || 0).toFixed(1)} label="Rating" />
         </div>
 
         {profile.expertise.length > 0 && (
@@ -146,7 +146,7 @@ export function AuthorDetail({
           {[
             { value: profile.articleCount, label: "Articles" },
             { value: formatCompact(profile.totalViews), label: "Total views" },
-            { value: profile.avgRating.toFixed(1), label: "Avg rating" },
+            { value: (Number(profile.avgRating) || 0).toFixed(1), label: "Avg rating" },
           ].map((s) => (
             <div key={s.label} className="border-r border-line/50 p-4 text-center last:border-r-0">
               <p className="text-2xl font-bold text-ink">{s.value}</p>

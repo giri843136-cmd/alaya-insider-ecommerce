@@ -46,7 +46,7 @@ export function WeightedRatingDisplay({ reviews, className }: WeightedRatingDisp
           <BarChart3 className="h-4 w-4 text-accent" /> Weighted rating
         </h3>
         <div className="flex items-center gap-1.5">
-          <span className="text-2xl font-bold text-ink">{(rating.overall ?? 0).toFixed(1)}</span>
+          <span className="text-2xl font-bold text-ink">{(Number(rating.overall) || 0).toFixed(1)}</span>
           <div className="flex">
             {Array.from({ length: 5 }).map((_, i) => (
               <Star
@@ -273,7 +273,7 @@ export function ReviewSummaryPanel({ product, className }: ReviewSummaryPanelPro
         <div>
           <h2 className="font-display text-2xl font-semibold text-ink">Customer reviews</h2>
           <div className="mt-2 flex items-center gap-3">
-            <span className="text-3xl font-bold text-ink">{(rating.overall ?? 0).toFixed(1)}</span>
+            <span className="text-3xl font-bold text-ink">{(Number(rating.overall) || 0).toFixed(1)}</span>
             <div className="flex">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star

@@ -75,7 +75,7 @@ export function RatingInline({ rating, count }: { rating: number; count?: number
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-muted">
       <Stars rating={rating} />
-      <span className="font-medium text-ink">{(rating ?? 0).toFixed(1)}</span>
+      <span className="font-medium text-ink">{(Number(rating) || 0).toFixed(1)}</span>
       {count != null && <span>({count})</span>}
     </span>
   );

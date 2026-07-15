@@ -1,18 +1,18 @@
 import { Link } from "react-router-dom";
-import { Trash2, ArrowRight, ShoppingBag, ShieldCheck, Tag } from "lucide-react";
+import { Trash2, ArrowRight, ShoppingBag, ExternalLink } from "lucide-react";
 import { useCommerce } from "../context/CommerceContext";
-import { useStore } from "../context/StoreContext";
 import { Seo } from "../components/Seo";
 import { Breadcrumbs, EmptyState, Money, QuantitySelector } from "../components/ui";
 
-export default function Cart() {
-  const { detailedLines, subtotal, updateQty, removeLine, clearCart, shippingRemaining } = useCommerce();
-  const { settings } = useStore();
+/**
+ * ALAYA INSIDER — Saved Items
+ * --------------------------------------------------------------------------
+ * Affiliate-only view: users save products for price/market comparison.
+ * No checkout, no purchase — all CTAs go to affiliate merchant links.
+ */
 
-  const hasPhysical = detailedLines.some((d) => d.product.type !== "digital");
-  const shipping = !hasPhysical ? 0 : subtotal >= settings.shipping.freeOver || subtotal === 0 ? 0 : settings.shipping.flatRate;
-  const tax = subtotal * settings.taxRate;
-  const total = subtotal + shipping + tax;
+export default function Cart() {
+  const { detailedLines, updateQty, removeLine, clearCart } = useCommerce();
 
   return (
     <>
@@ -81,24 +81,16 @@ export default function Cart() {
               </div>
             </div>
 
-            {/* Summary */}
+            {/* Summary — affiliate-only */}
             <aside className="lg:sticky lg:top-28 lg:self-start">
               <div className="card p-6">
-                <h2 className="text-lg font-semibold text-ink">Order summary</h2>
-                {shippingRemaining > 0 && hasPhysical && (
-                  <div className="mt-3 flex items-center gap-2 rounded-lg bg-accent-soft p-3 text-xs text-accent">
-                    <Tag className="h-4 w-4" /> Add <Money amount={shippingRemaining} /> for free shipping
-                  </div>
-                )}
-                <dl className="mt-5 space-y-3 text-sm">
-                  <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd className="font-medium"><Money amount={subtotal} /></dd></div>
-                  <div className="flex justify-between"><dt className="text-muted">Shipping</dt><dd className="font-medium">{shipping === 0 ? "Free" : <Money amount={shipping} />}</dd></div>
-                  <div className="flex justify-between"><dt className="text-muted">Tax (est.)</dt><dd className="font-medium"><Money amount={tax} /></dd></div>
-                  <div className="flex justify-between border-t border-line pt-3 text-base"><dt className="font-semibold">Total</dt><dd className="font-semibold"><Money amount={total} /></dd></div>
-                </dl>
-                <Link to="/checkout" className="btn-primary btn-lg mt-6 w-full">Checkout <ArrowRight className="h-4 w-4" /></Link>
+                <h2 className="text-lg font-semibold text-ink">{detailedLines.length} saved item{detailedLines.length > 1 ? "s" : ""}</h2>
+                <p className="mt-2 text-sm text-muted">Compare prices across trusted merchants to find the best deal.</p>
+                <Link to="/compare" className="btn-primary btn-lg mt-6 w-full">
+                  Compare Merchants <ArrowRight className="h-4 w-4" />
+                </Link>
                 <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted">
-                  <ShieldCheck className="h-3.5 w-3.5" /> Secure, encrypted checkout
+                  <ExternalLink className="h-3.5 w-3.5" /> You'll be redirected to our trusted merchants
                 </p>
               </div>
             </aside>

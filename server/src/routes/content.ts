@@ -197,18 +197,18 @@ content.post("/popups/:id/track", async (c) => {
 /*  AFFILIATES                                                         */
 /* ================================================================== */
 
-content.get("/affiliates", async (c) => {
+content.get("/partners", async (c) => {
   const result = await affiliates.list(c.req.query() as any);
   return c.json(result);
 });
 
-content.get("/affiliates/:id", async (c) => {
+content.get("/partners/:id", async (c) => {
   const item = await affiliates.getById(c.req.param("id"));
-  if (!item) return c.json({ code: "NOT_FOUND", message: "Affiliate not found" }, 404);
+  if (!item) return c.json({ code: "NOT_FOUND", message: "Affiliate partner not found" }, 404);
   return c.json(item);
 });
 
-content.post("/affiliates", async (c) => {
+content.post("/partners", async (c) => {
   const body = await c.req.json<any>();
   const aff = await affiliates.create({
     name: body.name || "",
@@ -219,16 +219,16 @@ content.post("/affiliates", async (c) => {
   return c.json(aff, 201);
 });
 
-content.patch("/affiliates/:id", async (c) => {
+content.patch("/partners/:id", async (c) => {
   const patch = await c.req.json();
   const updated = await affiliates.update(c.req.param("id"), patch as any, "api");
-  if (!updated) return c.json({ code: "NOT_FOUND", message: "Affiliate not found" }, 404);
+  if (!updated) return c.json({ code: "NOT_FOUND", message: "Affiliate partner not found" }, 404);
   return c.json(updated);
 });
 
-content.delete("/affiliates/:id", async (c) => {
+content.delete("/partners/:id", async (c) => {
   const ok = await affiliates.delete(c.req.param("id"), "api");
-  if (!ok) return c.json({ code: "NOT_FOUND", message: "Affiliate not found" }, 404);
+  if (!ok) return c.json({ code: "NOT_FOUND", message: "Affiliate partner not found" }, 404);
   return c.json({ success: true });
 });
 

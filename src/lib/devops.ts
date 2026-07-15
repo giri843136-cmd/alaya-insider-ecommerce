@@ -341,7 +341,7 @@ export function saveSpans(traceId: string, spans: Span[]) {
     { id: "trace_req_2", name: "Order checkout", rootOperation: "POST /api/v1/orders", startTime: Date.now() - 300000, endTime: Date.now() - 298500, totalDurationMs: 1500, spanCount: 6, errorCount: 0, status: "healthy" },
     { id: "trace_req_3", name: "Search query", rootOperation: "GET /api/v1/search?q=gold", startTime: Date.now() - 600000, endTime: Date.now() - 599200, totalDurationMs: 800, spanCount: 3, errorCount: 0, status: "healthy" },
     { id: "trace_req_4", name: "Image upload", rootOperation: "POST /api/v1/media/upload", startTime: Date.now() - 900000, endTime: Date.now() - 897000, totalDurationMs: 3000, spanCount: 5, errorCount: 1, status: "degraded" },
-    { id: "trace_req_5", name: "Affiliate sync", rootOperation: "POST /api/v1/affiliates/sync", startTime: Date.now() - 1800000, endTime: Date.now() - 1797000, totalDurationMs: 3000, spanCount: 7, errorCount: 0, status: "healthy" },
+    { id: "trace_req_5", name: "Affiliate sync", rootOperation: "POST /api/v1/affiliates/sync (legacy)", startTime: Date.now() - 1800000, endTime: Date.now() - 1797000, totalDurationMs: 3000, spanCount: 7, errorCount: 0, status: "healthy" },
   ];
   saveTraces(recent);
 })();

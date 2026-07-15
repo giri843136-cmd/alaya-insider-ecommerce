@@ -21,7 +21,7 @@ export const SEED_CATEGORIES: CatDef[] = [
     name: "Kitchen",
     tagline: "Tools for the art of cooking",
     description: "Elevate your culinary experience with premium kitchen essentials designed for both form and function. Our collection features handcrafted tools, artisanal serveware, and heirloom-quality pieces that make every meal a celebration.",
-    image: "https://images.pexels.com/photos/262917/pexels-photo-7690325.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1000",
+    image: "https://images.pexels.com/photos/994234/pexels-photo-994234.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=1000",
   },
   {
     id: "beauty",
@@ -105,7 +105,7 @@ export const SEED_BRANDS: BrandDef[] = [
     id: "terra-stone", name: "Terra & Stone", slug: "terra-stone",
     tagline: "Handcrafted from the earth",
     description: "Terra & Stone works directly with artisan communities in Portugal and Italy to create handcrafted ceramics, stoneware, and kitchen tools. Each piece tells a story of traditional craftsmanship passed down through generations.",
-    image: "https://images.pexels.com/photos/262917/pexels-photo-7690325.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=600",
+    image: "https://images.pexels.com/photos/2386142/pexels-photo-2386142.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=800&h=600",
     website: "https://terrastone.example.com", instagram: "@terra_stone",
     country: "Portugal", featured: true,
   },

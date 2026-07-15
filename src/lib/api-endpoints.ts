@@ -203,13 +203,13 @@ export const ENDPOINTS = {
     track: (id: string) => detail(`${V1}/popups/${id}`, "track"),
   },
 
-  /* ---- Affiliates ---- */
+  /* ---- Affiliate Partners (ALAYA's own program, managed via content router) ---- */
   affiliates: {
-    list: (params?: ListParams) => list(`${V1}/affiliates`, params),
-    get: (id: string) => detail(`${V1}/affiliates`, id),
-    create: () => `${V1}/affiliates`,
-    update: (id: string) => detail(`${V1}/affiliates`, id),
-    delete: (id: string) => detail(`${V1}/affiliates`, id),
+    list: (params?: ListParams) => list(`${V1}/partners`, params),
+    get: (id: string) => detail(`${V1}/partners`, id),
+    create: () => `${V1}/partners`,
+    update: (id: string) => detail(`${V1}/partners`, id),
+    delete: (id: string) => detail(`${V1}/partners`, id),
   },
 
   /* ---- Loyalty ---- */

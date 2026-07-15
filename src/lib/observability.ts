@@ -200,7 +200,7 @@ export function getTraceStats(): { total: number; errors: number; healthy: numbe
   entities.forEach((type, i) => {
     const trace = createObsTrace(
       ["Product API", "Order Checkout", "Search Index", "Email Send", "AI Content Gen", "Webhook Delivery", "Auth Login", "Cache Warm", "Affiliate Sync", "Backup Job"][i],
-      ["GET /api/v1/products", "POST /api/v1/checkout", "POST /api/v1/search/index", "POST /api/v1/email/send", "POST /api/v1/ai/generate", "POST /webhooks/deliver", "POST /api/v1/auth/login", "POST /api/v1/cache/warm", "POST /api/v1/affiliates/sync", "POST /api/v1/backup/run"][i],
+      ["GET /api/v1/products", "POST /api/v1/checkout", "POST /api/v1/search/index", "POST /api/v1/email/send", "POST /api/v1/ai/generate", "POST /webhooks/deliver", "POST /api/v1/auth/login", "POST /api/v1/cache/warm", "POST /api/v1/affiliates/sync (legacy)", "POST /api/v1/backup/run"][i],
       type,
       { source: ["catalog", "checkout", "search", "notifications", "ai", "webhooks", "auth", "cache", "affiliates", "backup"][i] }
     );

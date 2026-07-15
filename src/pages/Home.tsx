@@ -21,6 +21,7 @@ import { BrandCard } from "../components/BrandCard";
 import { ArticleCard } from "../components/ArticleCard";
 import { HorizontalScroller } from "../components/HorizontalScroller";
 import { HeroSlider } from "../components/HeroSlider";
+import { SafeImg } from "../components/SafeImg";
 import { SectionHeading, Badge } from "../components/ui";
 import { FlashDeals } from "../components/home/FlashDeals";
 import { TrustSection } from "../components/home/TrustSection";
@@ -127,7 +128,7 @@ export default function Home() {
             {categories.map((c, i) => (
               <Reveal key={c.id} delay={i * 60}>
                 <Link to={`/shop?category=${c.id}`} className="group relative block aspect-[3/4] overflow-hidden rounded-[var(--radius-xl2)] bg-surface2">
-                  <img src={c.image} alt={c.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-105" />
+                  <SafeImg src={c.image} alt={c.name} loading="lazy" className="h-full w-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-105" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 p-4">
                     <p className="text-[0.65rem] uppercase tracking-[0.2em] text-white/70">{c.tagline}</p>
@@ -349,7 +350,7 @@ export default function Home() {
                 <div className="mt-6 space-y-4">
                   {affiliatePicks.map((p) => (
                     <a key={p.id} href={p.affiliateUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" className="group flex items-center gap-4 rounded-[var(--radius-xl2)] border border-line bg-surface p-3 transition-all hover:shadow-[var(--shadow-card)]">
-                      <img src={p.images[0]} alt={p.name} loading="lazy" className="h-20 w-16 rounded-lg object-cover" />
+                      <SafeImg src={p.images[0]} alt={p.name} loading="lazy" className="h-20 w-16 rounded-lg object-cover" />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2"><Badge variant="affiliate">Affiliate</Badge><span className="text-xs text-muted">{p.affiliatePartner}</span></div>
                         <p className="mt-1 truncate font-medium text-ink">{p.name}</p>
@@ -380,7 +381,7 @@ export default function Home() {
               <div className="grid gap-3">
                 {digital.map((p) => (
                   <Link key={p.id} to={`/product/${p.slug}`} className="group flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 p-3 transition-colors hover:bg-white/10">
-                    <img src={p.images[0]} alt="" loading="lazy" className="h-12 w-12 rounded-lg object-cover" />
+                    <SafeImg src={p.images[0]} alt="" loading="lazy" className="h-12 w-12 rounded-lg object-cover" />
                     <span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{p.name}</span><span className="text-xs text-canvas/60">From {settings.currency.symbol}{Math.round(p.price)}</span></span>
                     <ArrowRight className="h-4 w-4 text-canvas/60 transition-transform group-hover:translate-x-1" />
                   </Link>

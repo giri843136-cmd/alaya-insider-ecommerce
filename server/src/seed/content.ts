@@ -44,7 +44,7 @@ export const SEED_ARTICLES: ArticleDef[] = [
       "The main consideration with ceramic is brittleness. While incredibly hard, ceramic blades can chip if used to cut through bones, frozen foods, or if dropped on hard surfaces. Our Japanese Ceramic Knife Set uses advanced Zirconia 92 — the most durable ceramic available — to minimize this risk.",
       "Bottom line: for slicing, dicing, and precision cutting of fruits, vegetables, and boneless meats, ceramic is superior to steel in almost every way. Just treat them with care and they'll reward you with years of effortless cutting.",
     ],
-    cover: "https://images.pexels.com/photos/262917/pexels-photo-2762942.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=1600&h=900",
+    cover: "https://images.pexels.com/photos/2661468/pexels-photo-2661468.jpeg?auto=compress&cs=tinysrgb&fit=crop&w=1600&h=900",
     author: "James Hartley", authorRole: "Editor",
     category: "Kitchen", tags: ["knives", "ceramic", "cooking", "kitchen-tools", "buying-guide"],
     readMinutes: 6, publishedAt: daysAgo(14), featured: true,

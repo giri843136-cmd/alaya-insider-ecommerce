@@ -48,7 +48,7 @@ export default function Dashboard() {
     { label: "Open orders", value: String(openOrders), icon: Receipt, sub: `${openReturns} returns pending` },
     { label: "Affiliate revenue", value: formatPrice(affiliateRevenue, settings.currency), icon: DollarSign, sub: `${affiliateProducts.length} affiliate SKUs` },
     { label: "Customers", value: String(customers.length), icon: Users, sub: `${products.length} products` },
-    { label: "Avg. rating", value: `${avgRating.toFixed(2)}★`, icon: Star, sub: "Across catalogue" },
+    { label: "Avg. rating", value: `${(avgRating || 0).toFixed(2)}★`, icon: Star, sub: "Across catalogue" },
     { label: "Conversion rate", value: `${(orders.length / Math.max(1, customers.length) * 100).toFixed(1)}%`, icon: TrendingUp, sub: "Orders / customers" },
   ];
 

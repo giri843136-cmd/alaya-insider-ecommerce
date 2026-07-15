@@ -151,7 +151,7 @@ export function AffiliateProductCard({
         </h3>
         <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted">
           <Stars rating={product.rating} size={12} />
-          <span className="font-medium text-ink">{product.rating.toFixed(1)}</span>
+          <span className="font-medium text-ink">{(product.rating ?? 0).toFixed(1)}</span>
           <span aria-hidden="true">·</span>
           <span>{product.reviewCount} reviews</span>
         </div>

@@ -124,7 +124,7 @@ const ProductCardInner = memo(function ProductCardInner({ product, onQuickView }
         </h3>
         <div className="mt-1.5 flex items-center gap-1.5 text-xs text-muted">
           <Star className="h-3.5 w-3.5 fill-accent text-accent" strokeWidth={0} />
-          <span className="font-medium text-ink">{product.rating.toFixed(1)}</span>
+          <span className="font-medium text-ink">{(product.rating ?? 0).toFixed(1)}</span>
           <span aria-hidden="true">·</span>
           <span>{product.reviewCount} reviews</span>
         </div>

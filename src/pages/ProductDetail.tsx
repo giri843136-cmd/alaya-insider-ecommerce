@@ -226,7 +226,7 @@ export default function ProductDetail() {
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <span className="flex items-center gap-1.5 text-sm">
               <Stars rating={product.rating} size={16} />
-              <span className="font-medium text-ink">{product.rating.toFixed(1)}</span>
+              <span className="font-medium text-ink">{(product.rating ?? 0).toFixed(1)}</span>
               <a href="#reviews" className="text-muted hover:text-accent">({product.reviewCount} reviews)</a>
             </span>
             <span className="flex items-center gap-1 text-xs text-muted">
@@ -581,7 +581,7 @@ export default function ProductDetail() {
               <h2 className="font-display text-2xl font-semibold">Customer reviews</h2>
               <div className="mt-2 flex items-center gap-2">
                 <Stars rating={product.rating} size={18} />
-                <span className="text-sm font-medium">{product.rating.toFixed(1)} · {product.reviewCount} reviews</span>
+                <span className="text-sm font-medium">{(product.rating ?? 0).toFixed(1)} · {product.reviewCount} reviews</span>
               </div>
             </div>
           </div>

@@ -33,7 +33,7 @@ export default function AdminAuthorProfiles() {
             { label: "Authors", value: authors.length, icon: ShieldCheck },
             { label: "Total articles", value: authors.reduce((s, a) => s + a.articleCount, 0), icon: BookOpen },
             { label: "Total views", value: formatCompact(authors.reduce((s, a) => s + a.totalViews, 0)), icon: TrendingUp },
-            { label: "Avg rating", value: (authors.reduce((s, a) => s + a.avgRating, 0) / Math.max(1, authors.length)).toFixed(1), icon: Star },
+            { label: "Avg rating", value: (authors.reduce((s, a) => s + (a.avgRating ?? 0), 0) / Math.max(1, authors.length)).toFixed(1), icon: Star },
           ].map((s) => (
             <div key={s.label} className="card p-4">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
@@ -70,7 +70,7 @@ export default function AdminAuthorProfiles() {
                     <div className="mt-1.5 flex items-center gap-3 text-xs text-muted">
                       <span>{author.articleCount} articles</span>
                       <span>{formatCompact(author.totalViews)} views</span>
-                      <span>{author.avgRating.toFixed(1)} avg</span>
+                      <span>{(author.avgRating ?? 0).toFixed(1)} avg</span>
                     </div>
                   </div>
                   {author.featured && (
@@ -109,7 +109,7 @@ export default function AdminAuthorProfiles() {
                   </div>
                   <div className="flex items-center justify-between border-b border-line pb-2">
                     <span className="text-xs font-medium text-muted">Avg rating</span>
-                    <span className="font-semibold text-ink">{selected.avgRating.toFixed(1)}</span>
+                    <span className="font-semibold text-ink">{(selected.avgRating ?? 0).toFixed(1)}</span>
                   </div>
                   <div className="flex items-center justify-between border-b border-line pb-2">
                     <span className="text-xs font-medium text-muted">Featured</span>

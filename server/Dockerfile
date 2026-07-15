@@ -47,10 +47,8 @@ COPY --from=build /app/package.json ./
 # Ensure schema.sql is available in the dist/db directory for migrations
 COPY --from=build /app/src/db/schema.sql ./dist/db/schema.sql
 
-# Switch to non-root user (principle of least privilege)
-USER appuser
-
-EXPOSE 3001
+# Patch base image CVE layers (must run before USER appuser to keep root perms)
+RUN apk upgrade --no-cache
 
 # Environment defaults
 ENV DATA_DIR=/data
@@ -58,9 +56,15 @@ ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 
 # Security: limit heap memory, suppress Node.js core deprecation warnings in production
-# Run apk upgrade to patch base image CVE layers
-RUN apk upgrade --no-cache
 ENV NODE_OPTIONS="--max-old-space-size=512"
+
+# Switch to non-root user (principle of least privilege)
+USER appuser
+
+EXPOSE 3001
+
+# Health check (pure Node.js — no external deps needed)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 # Health check (pure Node.js — no external deps needed)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \

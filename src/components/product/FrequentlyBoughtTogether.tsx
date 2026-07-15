@@ -1,15 +1,14 @@
 import { useMemo, useState } from "react";
-import { Plus, ShoppingBag, Check, PackageCheck } from "lucide-react";
+import { Plus, ShoppingBag, Check, PackageCheck, ExternalLink } from "lucide-react";
 import type { Product } from "../../lib/types";
 import { useCommerce } from "../../context/CommerceContext";
-import { useStore } from "../../context/StoreContext";
+import { flags } from "../../lib/featureFlags";
 import { Price, Money } from "../ui";
 import { cn } from "@/utils/cn";
 
 /** "Frequently bought together" bundle with a combined total + add-all. */
 export function FrequentlyBoughtTogether({ main, related }: { main: Product; related: Product[] }) {
   const { addToCart } = useCommerce();
-  const { settings } = useStore();
   const [picked, setPicked] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(related.slice(0, 2).map((p) => [p.id, true]))
   );
@@ -19,13 +18,16 @@ export function FrequentlyBoughtTogether({ main, related }: { main: Product; rel
 
   if (related.length === 0) return null;
 
+  // In affiliate mode, items with merchants show merchant links instead
+  const showAddToBag = flags.ENABLE_ECOMMERCE;
+
   return (
     <div className="card p-6 sm:p-8">
       <div className="flex items-center gap-2">
         <PackageCheck className="h-5 w-5 text-accent" />
-        <h2 className="font-display text-xl font-semibold text-ink">Frequently bought together</h2>
+        <h2 className="font-display text-xl font-semibold text-ink">Frequently compared together</h2>
       </div>
-      <p className="mt-1 text-sm text-muted">Complete your routine — bundle and save time at checkout.</p>
+      <p className="mt-1 text-sm text-muted">These products pair well — check prices across merchants.</p>
 
       <div className="mt-6 flex flex-col gap-6 lg:flex-row">
         {/* Visual stack */}
@@ -58,20 +60,34 @@ export function FrequentlyBoughtTogether({ main, related }: { main: Product; rel
           })}
         </div>
 
-        {/* Total + add */}
+        {/* Total + add/compare */}
         <div className="flex flex-col justify-between rounded-xl bg-surface2/50 p-5 lg:w-56">
           <div>
-            <p className="text-xs text-muted">Total for {items.length} items</p>
+            <p className="text-xs text-muted">Combined from {items.length} items</p>
             <p className="mt-1 font-display text-2xl font-semibold text-ink"><Money amount={total} /></p>
-            <p className="mt-1 text-xs text-success">Save time at checkout</p>
+            {showAddToBag ? (
+              <p className="mt-1 text-xs text-success">Save by bundling</p>
+            ) : (
+              <p className="mt-1 text-xs text-accent">Prices vary by merchant</p>
+            )}
           </div>
-          <button
-            onClick={() => items.forEach((p) => !p.affiliate && addToCart(p.id, "", "", 1, false))}
-            className="btn-primary btn-md mt-4 w-full"
-          >
-            <ShoppingBag className="h-4 w-4" /> Add {items.length} to bag
-          </button>
-          <p className="mt-2 text-center text-[0.65rem] text-muted">Shipping calc. at checkout · {settings.currency.code}</p>
+          {showAddToBag ? (
+            <button
+              onClick={() => items.forEach((p) => !p.affiliate && addToCart(p.id, "", "", 1, false))}
+              className="btn-primary btn-md mt-4 w-full"
+            >
+              <ShoppingBag className="h-4 w-4" /> Add {items.length} to bag
+            </button>
+          ) : (
+            <a
+              href={main.affiliateUrl || "#"}
+              target="_blank"
+              rel="noopener noreferrer sponsored"
+              className="btn-primary btn-md mt-4 w-full"
+            >
+              <ExternalLink className="h-4 w-4" /> See best prices
+            </a>
+          )}
         </div>
       </div>
     </div>

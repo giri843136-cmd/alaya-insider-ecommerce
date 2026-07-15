@@ -288,9 +288,17 @@ auth.post("/auth/customer/apple", async (c) => {
  */
 auth.post("/auth/customer/guest", async (c) => {
   try {
-    const guestId = `guest_${v4().slice(0, 8)}`; // guest_<uuid_short>
+    const guestId = v4();
     const ip = c.req.header("x-forwarded-for") || c.req.header("x-real-ip") || "127.0.0.1";
     const userAgent = c.req.header("user-agent") || "";
+    const { query } = await import("../db/index.js");
+    // Create a guest user in the users table to satisfy FK constraint
+    await query(
+      `INSERT INTO users (id, email, password_hash, name, role, is_active, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+       ON CONFLICT (id) DO NOTHING`,
+      [guestId, `guest_${guestId.slice(0, 8)}@alayainsider.com`, "guest", "Guest", "customer", true],
+    );
     const session = await createSession(guestId, "customer", ip, userAgent, "guest");
 
     if (!session.success) {

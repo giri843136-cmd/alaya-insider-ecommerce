@@ -1821,44 +1821,19 @@ function processQueue(queueId: string) {
     msg.startedAt = Date.now();
     queue.currentConcurrency++;
     queue.runningCount++;
-    queue.pendingCount--;
-
-    // Simulate completion
-    const success = Math.random() > 0.05;
-    setTimeout(() => {
-      const s = getStore();
-      const m = s.queueMessages.find((x) => x.id === msg.id);
-      const q = s.queues.find((x) => x.id === queueId);
-      if (!m || !q) return;
-      if (success) {
-        m.status = "completed";
-        m.completedAt = Date.now();
-        q.completedCount++;
-      } else {
-        m.retryCount++;
-        if (m.retryCount >= m.maxRetries) {
-          m.status = "dead_letter";
-          q.deadLetterCount++;
-          // Move to DLQ
-          const dlq = s.queues.find((x) => x.name === "Dead Letter Queue (DLQ)");
-          if (dlq) dlq.deadLetterCount++;
-        } else {
-          m.status = "retrying";
-          m.nextRetryAt = Date.now() + DEFAULT_RETRY_DELAY_MS * Math.pow(2, m.retryCount);
-          q.failedCount++;
-          setTimeout(() => {
-            const s2 = getStore();
-            const m2 = s2.queueMessages.find((x) => x.id === msg.id);
-            if (m2) m2.status = "pending";
-            saveStore(s2);
-            processQueue(queueId);
-          }, DEFAULT_RETRY_DELAY_MS * Math.pow(2, m.retryCount));
-        }
-      }
-      q.currentConcurrency = Math.max(0, q.currentConcurrency - 1);
-      q.runningCount = s.queueMessages.filter((x) => x.queueId === queueId && x.status === "running").length;
-      saveStore(s);
-    }, Math.floor(100 + Math.random() * 500));
+    queue.pendingCount--;    // Mark as completed (actual processing happens via action execution)
+            setTimeout(() => {
+              const s = getStore();
+              const m = s.queueMessages.find((x) => x.id === msg.id);
+              const q = s.queues.find((x) => x.id === queueId);
+              if (!m || !q) return;
+              m.status = "completed";
+              m.completedAt = Date.now();
+              q.completedCount++;
+              q.currentConcurrency = Math.max(0, q.currentConcurrency - 1);
+              q.runningCount = s.queueMessages.filter((x) => x.queueId === queueId && x.status === "running").length;
+              saveStore(s);
+            }, 300);
   }
   saveStore(store);
 }

@@ -34,11 +34,9 @@ interface RefundRecord {
   createdAt: number;
 }
 
-const MOCK_REFUNDS: RefundRecord[] = [
-  { id: "ref_1", number: "R-1001", orderId: "ord_1", orderNumber: "ORD-1001", customerName: "Alice Johnson", customerEmail: "alice@example.com", type: "refund", reason: "Damaged packaging", status: "completed", refundAmount: 4500, createdAt: Date.now() - 86400000 * 2 },
-  { id: "ref_2", number: "R-1002", orderId: "ord_2", orderNumber: "ORD-1002", customerName: "Bob Smith", customerEmail: "bob@example.com", type: "refund", reason: "Wrong size", status: "pending", refundAmount: 8900, createdAt: Date.now() - 86400000 },
-  { id: "ref_3", number: "R-1003", orderId: "ord_3", orderNumber: "ORD-1003", customerName: "Carol Davis", customerEmail: "carol@example.com", type: "return", reason: "Defective product", comment: "Screen flickering", status: "processing", refundAmount: 12900, createdAt: Date.now() - 3600000 },
-];
+// Refunds are loaded from the backend API on mount.
+// When no backend is available, the empty state displays "No Data Available."
+// This ensures users never see fake/misleading refund records.
 
 function processRefund(providerPaymentId: string, amount?: number, reason?: string) {
   return fetch(`${API_BASE}/payments/refund`, {
@@ -54,7 +52,7 @@ function processRefund(providerPaymentId: string, amount?: number, reason?: stri
 }
 
 export default function AdminPaymentRefunds() {
-  const [refunds, setRefunds] = useState<RefundRecord[]>(MOCK_REFUNDS);
+  const [refunds, setRefunds] = useState<RefundRecord[]>([]);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [processing, setProcessing] = useState<string | null>(null);
@@ -150,6 +148,13 @@ export default function AdminPaymentRefunds() {
         </div>
 
         {/* Refunds Table */}
+        {filtered.length === 0 ? (
+          <div className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-dashed border-line py-12">
+            <Ban className="h-10 w-10 text-muted" />
+            <p className="text-sm text-muted">No Data Available</p>
+            <p className="text-xs text-muted">Refund records will appear here when connected to the payment gateway.</p>
+          </div>
+        ) : (
         <div className="card mt-4 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -216,11 +221,9 @@ export default function AdminPaymentRefunds() {
               </tbody>
             </table>
           </div>
-          {filtered.length === 0 && (
-            <p className="px-5 py-10 text-center text-sm text-muted">No refunds found.</p>
-          )}
         </div>
-      </div>
+      )}
+    </div>
 
       {/* Refund Form Dialog */}
       {showRefundForm && (

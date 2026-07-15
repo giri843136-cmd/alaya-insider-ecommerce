@@ -3,6 +3,7 @@ import { useState } from "react";
 import { X, ShoppingBag, Heart, ArrowRight, Truck, RefreshCw, ShieldCheck, ExternalLink } from "lucide-react";
 import { useEscapeKey, useLockBody } from "../lib/hooks";
 import { useCommerce } from "../context/CommerceContext";
+import { flags } from "../lib/featureFlags";
 import { Price, Stars, Badge, QuantitySelector } from "./ui";
 import { cn } from "@/utils/cn";
 import { discountPercent } from "../lib/utils";
@@ -50,8 +51,8 @@ export function QuickView({ product, onClose }: { product: Product | null; onClo
               {!product.affiliate && !soldOut && (
                 <QuantitySelector value={qty} onChange={setQty} size="sm" max={product.type === "digital" ? 1 : Math.max(1, product.stock)} />
               )}
-              {product.affiliate ? (
-                <a href={product.affiliateUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" className="btn-primary btn-md flex-1">Shop partner <ExternalLink className="h-4 w-4" /></a>
+              {product.affiliate || !flags.ENABLE_ECOMMERCE ? (
+                <a href={product.affiliateUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" className="btn-primary btn-md flex-1"><ExternalLink className="h-4 w-4" /> {product.affiliatePartner ? `View on ${product.affiliatePartner}` : "See best price"}</a>
               ) : (
                 <button disabled={soldOut} onClick={() => addToCart(product.id, dvKey, dvLabel, qty)} className="btn-primary btn-md flex-1">
                   <ShoppingBag className="h-4 w-4" /> {soldOut ? "Sold out" : "Add to bag"}

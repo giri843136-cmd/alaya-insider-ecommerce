@@ -21,6 +21,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useStore } from "../context/StoreContext";
 import { buildPrimaryNav, buildGuideNav, buildTrendingTopics } from "../lib/navigationPlatform";
 import { cn } from "@/utils/cn";
+import { flags } from "../lib/featureFlags";
 
 const ICON_BTN =
   "relative grid h-10 w-10 place-items-center rounded-full text-ink transition-colors hover:bg-surface2 focus-visible:outline-2 focus-visible:outline-accent focus-visible:outline-offset-2";
@@ -275,10 +276,12 @@ export function Navbar({ onOpenSearch }: { onOpenSearch: () => void }) {
             <Heart className="h-5 w-5" />
             {wishlist.length > 0 && <span className={DOT}>{wishlist.length}</span>}
           </Link>
-          <button type="button" className={ICON_BTN} onClick={openCart} aria-label={`Bag, ${cartCount} items`}>
-            <ShoppingBag className="h-5 w-5" />
-            {cartCount > 0 && <span className={DOT}>{cartCount}</span>}
-          </button>
+          {flags.ENABLE_ECOMMERCE && (
+            <button type="button" className={ICON_BTN} onClick={openCart} aria-label={`Bag, ${cartCount} items`}>
+              <ShoppingBag className="h-5 w-5" />
+              {cartCount > 0 && <span className={DOT}>{cartCount}</span>}
+            </button>
+          )}
         </div>
       </nav>
 

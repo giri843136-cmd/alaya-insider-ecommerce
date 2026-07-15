@@ -1,6 +1,6 @@
 import { memo, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { Heart, ShoppingBag, Star, Scale } from "lucide-react";
+import { Heart, ShoppingBag, Star, Scale, Eye } from "lucide-react";
 import type { Product } from "../lib/types";
 import { useCommerce } from "../context/CommerceContext";
 import { useStore } from "../context/StoreContext";
@@ -10,6 +10,7 @@ import { Skeleton } from "./ui";
 import { SafeImg } from "./SafeImg";
 import { cn } from "@/utils/cn";
 import { discountPercent } from "../lib/utils";
+import { flags } from "../lib/featureFlags";
 
 const ProductCardInner = memo(function ProductCardInner({ product, onQuickView }: { product: Product; onQuickView?: (p: Product) => void }) {
   const { toggleWishlist, inWishlist, toggleCompare, inCompare } = useCommerce();
@@ -100,8 +101,8 @@ const ProductCardInner = memo(function ProductCardInner({ product, onQuickView }
         {/* Quick action */}
         <div className="absolute inset-x-3 bottom-3 flex translate-y-3 flex-col gap-2 opacity-0 transition-all duration-300 group-hover:translate-y-0 group-hover:opacity-100">
           <Link to={`/product/${product.slug}`} className="btn-primary btn-md w-full">
-            <ShoppingBag className="h-4 w-4" />
-            View options
+            {flags.ENABLE_ECOMMERCE ? <ShoppingBag className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {product.affiliate || !flags.ENABLE_ECOMMERCE ? "See details" : "View options"}
           </Link>
           <button type="button" onClick={handleQuickView} className="btn-ghost btn-sm w-full bg-white/70 text-ink backdrop-blur hover:bg-white">
             Quick view

@@ -307,25 +307,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   /*  BACKEND SYNC                                                   */
   /* ============================================================== */
 
-  // On mount, hydrate seed data if store is empty (first visit — localStorage was empty)
-  useEffect(() => {
-    if (data.products.length > 0) return; // Already has data from localStorage
-    let cancelled = false;
-    (async () => {
-      try {
-        const { SEED_STORE } = await import("../lib/seed");
-        if (cancelled) return;
-        setData((prev) => {
-          // Only seed if still empty
-          if (prev.products.length > 0) return prev;
-          return { ...SEED_STORE, settings: { ...SEED_STORE.settings, ...prev.settings } };
-        });
-      } catch {
-        // Seed data failed to load — app will show empty state
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [data.products.length]);
+  // Seed data has been removed per LP1 Phase 1 requirements.
+  // Store data is loaded exclusively from localStorage or the import pipeline.
+  // No demo products, categories, brands, or reviews are ever auto-loaded.
 
   // On mount, hydrate from backend if configured
   useEffect(() => {
@@ -1142,7 +1126,8 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const resetData = useCallback(() => {
-    import("../lib/seed").then(({ SEED_STORE }) => setData(SEED_STORE)).catch(() => {});
+    setData(EMPTY_STORE);
+    try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
   }, []);
 
   const value = useMemo<StoreContextValue>(

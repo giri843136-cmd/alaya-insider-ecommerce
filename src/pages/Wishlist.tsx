@@ -6,6 +6,7 @@ import { useToast } from "../context/ToastContext";
 import { Seo } from "../components/Seo";
 import { ProductCard } from "../components/ProductCard";
 import { SectionHeading, Breadcrumbs, EmptyState } from "../components/ui";
+import { flags } from "../lib/featureFlags";
 
 export default function Wishlist() {
   const { wishlist, recentlyViewed, addToCart } = useCommerce();
@@ -68,7 +69,7 @@ export default function Wishlist() {
           <>
             <div className="mt-6 flex items-center justify-between">
               <p className="text-sm text-muted">{items.length} saved item{items.length > 1 ? "s" : ""}</p>
-              <button onClick={addAll} className="btn-accent-soft btn-sm"><ShoppingBag className="h-4 w-4" /> Add all to bag</button>
+              {flags.ENABLE_ECOMMERCE && <button onClick={addAll} className="btn-accent-soft btn-sm"><ShoppingBag className="h-4 w-4" /> Add all to bag</button>}
             </div>
             <div className="mt-6 grid grid-cols-2 gap-x-5 gap-y-10 lg:grid-cols-4">
               {items.map((p) => (

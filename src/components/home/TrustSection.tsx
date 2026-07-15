@@ -3,8 +3,8 @@ import { Reveal } from "../Reveal";
 import { useStore } from "../../context/StoreContext";
 
 const TRUST = [
-  { icon: ShieldCheck, title: "Secure checkout", text: "256-bit SSL encryption on every order" },
-  { icon: RefreshCw, title: "30-day returns", text: "Easy, no-questions-asked refunds" },
+  { icon: ShieldCheck, title: "Trusted recommendations", text: "Every pick is editor-vetted, never paid placement" },
+  { icon: RefreshCw, title: "30-day returns", text: "Merchant-backed returns on eligible purchases" },
   { icon: Headphones, title: "Real human support", text: "Care team replies within a day" },
   { icon: Eye, title: "Affiliate transparency", text: "Always clearly labelled, never hidden" },
   { icon: Award, title: "Trusted brands", text: "Curated makers, vetted by editors" },
@@ -19,10 +19,10 @@ export function TrustSection() {
     <section className="container-edge py-20">
       <Reveal>
         <div className="mx-auto max-w-2xl text-center">
-          <span className="eyebrow mb-3">Why shop with us</span>
-          <h2 className="text-display-m text-ink">Shop with complete confidence</h2>
+          <span className="eyebrow mb-3">Why trust our picks</span>
+          <h2 className="text-display-m text-ink">Recommendations you can rely on</h2>
           <p className="mt-3 text-muted">
-            Every detail of {settings.storeName} is designed around trust — from secure payments to honest curation.
+            Every detail of {settings.storeName} is designed around editorial integrity — from honest reviews to transparent affiliate partnerships.
           </p>
         </div>
       </Reveal>

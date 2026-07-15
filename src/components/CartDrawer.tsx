@@ -5,8 +5,11 @@ import { useStore } from "../context/StoreContext";
 import { useEscapeKey, useLockBody } from "../lib/hooks";
 import { EmptyState, Money, QuantitySelector } from "./ui";
 import { formatPrice } from "../lib/utils";
+import { flags } from "../lib/featureFlags";
 
 export function CartDrawer() {
+  // Freeze in affiliate-only mode — cart is hidden
+  if (!flags.ENABLE_ECOMMERCE) return null;
   const {
     cartOpen,
     closeCart,

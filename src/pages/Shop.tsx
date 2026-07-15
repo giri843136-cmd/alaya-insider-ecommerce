@@ -9,6 +9,7 @@ import { Breadcrumbs, Price } from "../components/ui";
 import { useLockBody } from "../lib/hooks";
 import { cn } from "@/utils/cn";
 import type { Product } from "../lib/types";
+import { flags } from "../lib/featureFlags";
 
 type PriceBucket = "all" | "under50" | "50to150" | "over150";
 type TypeFilter = "all" | "physical" | "digital" | "variable" | "affiliate";
@@ -545,8 +546,8 @@ function ProductListRow({ product }: { product: Product }) {
       <div className="flex flex-row items-center gap-3 sm:flex-col sm:items-end">
         <Price price={product.price} salePrice={product.salePrice} priceClassName="text-lg" />
         <div className="flex gap-2">
-          {product.affiliate ? (
-            <a href={product.affiliateUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" className="btn-dark btn-sm">Shop partner</a>
+          {product.affiliate || !flags.ENABLE_ECOMMERCE ? (
+            <a href={product.affiliateUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" className="btn-dark btn-sm">See best price</a>
           ) : (
             <button disabled={soldOut} onClick={() => addToCart(product.id, "", "", 1, true)} className="btn-primary btn-sm">{soldOut ? "Sold out" : "Add to bag"}</button>
           )}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ShoppingBag, ExternalLink, Heart } from "lucide-react";
 import type { Product } from "../../lib/types";
 import { useCommerce } from "../../context/CommerceContext";
+import { flags } from "../../lib/featureFlags";
 import { Price } from "../ui";
 import { cn } from "@/utils/cn";
 import { discountPercent } from "../../lib/utils";
@@ -26,7 +27,7 @@ export function StickyPurchaseBar({ product }: { product: Product }) {
     <div
       className={cn(
         "fixed inset-x-0 bottom-0 z-[120] border-t border-line bg-surface/95 backdrop-blur transition-transform duration-300 lg:hidden",
-        show && !soldOut ? "translate-y-0" : "translate-y-full"
+        show && (product.affiliate || flags.ENABLE_ECOMMERCE) && !soldOut ? "translate-y-0" : "translate-y-full"
       )}
     >
       <div className="container-edge flex items-center gap-3 py-3">
@@ -41,9 +42,9 @@ export function StickyPurchaseBar({ product }: { product: Product }) {
         <button onClick={() => toggleWishlist(product.id)} aria-pressed={saved} className={cn("grid h-10 w-10 shrink-0 place-items-center rounded-full border border-line", saved ? "text-accent" : "text-ink")}>
           <Heart className="h-4 w-4" fill={saved ? "currentColor" : "none"} />
         </button>
-        {product.affiliate ? (
+        {product.affiliate || !flags.ENABLE_ECOMMERCE ? (
           <a href={product.affiliateUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" className="btn-primary btn-sm shrink-0">
-            <ExternalLink className="h-4 w-4" /> Shop
+            <ExternalLink className="h-4 w-4" /> See best price
           </a>
         ) : (
           <button onClick={() => addToCart(product.id, "", "", 1, true)} className="btn-primary btn-sm shrink-0">

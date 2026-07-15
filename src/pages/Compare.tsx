@@ -5,12 +5,21 @@ import { useToast } from "../context/ToastContext";
 import { useCommerce } from "../context/CommerceContext";
 import { Seo } from "../components/Seo";
 import { Breadcrumbs, EmptyState, Price, Stars, Badge } from "../components/ui";
+import { flags } from "../lib/featureFlags";
 
 export default function Compare() {
   const { compare, addToCart, clearCompare, toggleCompare } = useCommerce();
   const { getProduct, categories } = useStore();
   const { toast } = useToast();
   const items = compare.map((id) => getProduct(id)).filter((p): p is NonNullable<typeof p> => !!p);
+
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Product Comparison — ALAYA INSIDER",
+    description: `Comparing ${items.length} products side by side`,
+    about: items.map(p => ({ "@type": "Product", name: p.name, sku: p.sku })),
+  };
 
   const catName = (id: string) => categories.find((c) => c.id === id)?.name ?? id;
 
@@ -29,7 +38,7 @@ export default function Compare() {
 
   return (
     <>
-      <Seo title="Compare" path="/compare" />
+      <Seo title="Compare" path="/compare" schema={schema} />
       <div className="container-edge py-8">
         <Breadcrumbs items={[{ label: "Home", to: "/" }, { label: "Compare" }]} />
       </div>
@@ -118,8 +127,8 @@ export default function Compare() {
                   <th className="p-4 text-left text-xs font-semibold uppercase tracking-wider text-muted"></th>
                   {items.map((p) => (
                     <td key={p.id} className="p-4 text-center">
-                      {p.affiliate ? (
-                        <a href={p.affiliateUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" className="btn-dark btn-sm w-full">Shop partner</a>
+                      {p.affiliate || !flags.ENABLE_ECOMMERCE ? (
+                        <a href={p.affiliateUrl || "#"} target="_blank" rel="noopener noreferrer sponsored" className={`btn-dark btn-sm w-full`}>See best price</a>
                       ) : (
                         <button disabled={p.stock <= 0} onClick={() => addToCart(p.id, "", "", 1, true)} className="btn-primary btn-sm w-full">
                           <ShoppingBag className="h-4 w-4" /> {p.stock <= 0 ? "Sold out" : "Add"}

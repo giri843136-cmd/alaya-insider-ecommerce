@@ -476,9 +476,9 @@ async function seedAffiliates(affiliates: any[]): Promise<MigrationResult> {
       if (existing) { skipped++; continue; }
 
       await query(
-        `INSERT INTO affiliates (id, name, url, commission, active, created_at, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-        [a.id || uuidv4(), a.name, a.url || "", a.commission ?? 5, a.active ?? true, now(), now()],
+        `INSERT INTO affiliates (id, name, email, website, commission_rate, tracking_id, status, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+        [a.id || uuidv4(), a.name, a.email || "", a.url || a.website || "", a.commission ?? 5, a.trackingId || "", a.status || "active", now(), now()],
       );
       inserted++;
     } catch (err) { errors++; }

@@ -29,10 +29,10 @@ import { BUYING_GUIDES } from "../components/BuyingGuide";
 import { wide, img, hashToIndex } from "../lib/utils";
 
 const VALUE_PROPS = [
-  { icon: Truck, title: "Worldwide shipping", text: "Complimentary over $150" },
-  { icon: ShieldCheck, title: "Secure checkout", text: "Encrypted & protected" },
-  { icon: RefreshCw, title: "30-day returns", text: "Easy, no questions" },
-  { icon: Sparkles, title: "Insider rewards", text: "Earn on every order" },
+  { icon: Truck, title: "Worldwide shipping", text: "To 9 countries from top merchants" },
+  { icon: ShieldCheck, title: "Editors' trust", text: "Every pick is research-driven" },
+  { icon: RefreshCw, title: "30-day returns", text: "Merchant-backed, easy process" },
+  { icon: Sparkles, title: "Price intelligence", text: "History, alerts & comparisons" },
 ];
 
 const TESTIMONIALS = [

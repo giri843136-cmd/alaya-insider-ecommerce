@@ -32,49 +32,14 @@ interface DisputeRecord {
   createdAt: number;
 }
 
-const MOCK_DISPUTES: DisputeRecord[] = [
-  {
-    id: "dp_1", number: "D-1001", orderId: "ord_5", orderNumber: "ORD-1005",
-    customerName: "Eve Wilson", customerEmail: "eve@example.com",
-    amount: 12900, reason: "Product not received", currency: "USD",
-    status: "needs_response", evidenceSubmitted: false,
-    dueBy: Date.now() + 86400000 * 5,
-    timeline: [
-      { action: "dispute.created", detail: "Customer filed chargeback with card issuer", timestamp: Date.now() - 86400000 * 2 },
-      { action: "notification.sent", detail: "Dispute notification sent to admin", timestamp: Date.now() - 86400000 * 2 + 3600000 },
-    ],
-    createdAt: Date.now() - 86400000 * 2,
-  },
-  {
-    id: "dp_2", number: "D-1002", orderId: "ord_8", orderNumber: "ORD-1008",
-    customerName: "Frank Miller", customerEmail: "frank@example.com",
-    amount: 4500, reason: "Defective item", currency: "USD",
-    status: "under_review", evidenceSubmitted: true,
-    timeline: [
-      { action: "dispute.created", detail: "Customer filed chargeback - defective item", timestamp: Date.now() - 86400000 * 7 },
-      { action: "evidence.submitted", detail: "Shipping proof and product photos uploaded", timestamp: Date.now() - 86400000 * 5 },
-      { action: "under_review", detail: "Bank is reviewing submitted evidence", timestamp: Date.now() - 86400000 * 3 },
-    ],
-    createdAt: Date.now() - 86400000 * 7,
-  },
-  {
-    id: "dp_3", number: "D-1003", orderId: "ord_12", orderNumber: "ORD-1012",
-    customerName: "Grace Lee", customerEmail: "grace@example.com",
-    amount: 8900, reason: "Unauthorized transaction", currency: "USD",
-    status: "won", evidenceSubmitted: true,
-    timeline: [
-      { action: "dispute.created", detail: "Customer claimed unauthorized transaction", timestamp: Date.now() - 86400000 * 14 },
-      { action: "evidence.submitted", detail: "IP logs and device fingerprint provided", timestamp: Date.now() - 86400000 * 12 },
-      { action: "won", detail: "Bank ruled in merchant favor - transaction authorized", timestamp: Date.now() - 86400000 * 2 },
-    ],
-    createdAt: Date.now() - 86400000 * 14,
-  },
-];
+// Disputes are loaded from the backend API on mount.
+// When no backend is available, the empty state displays "No dispute data available."
+// This ensures users never see fake/misleading dispute records.
 
 type Tab = "all" | "needs_response" | "under_review" | "won" | "lost";
 
 export default function AdminPaymentDisputes() {
-  const [disputes] = useState<DisputeRecord[]>(MOCK_DISPUTES);
+  const [disputes] = useState<DisputeRecord[]>([]);
   const [tab, setTab] = useState<Tab>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<DisputeRecord | null>(null);
@@ -136,6 +101,13 @@ export default function AdminPaymentDisputes() {
         </div>
 
         {/* Disputes */}
+        {filtered.length === 0 ? (
+          <div className="mt-6 flex flex-col items-center gap-3 rounded-xl border border-dashed border-line py-12">
+            <Shield className="h-10 w-10 text-muted" />
+            <p className="text-sm text-muted">No Data Available</p>
+            <p className="text-xs text-muted">Dispute data will appear here when connected to the payment gateway.</p>
+          </div>
+        ) : (
         <div className="mt-4 space-y-3">
           {filtered.map((d) => (
             <div key={d.id} className="card card-hover p-4" onClick={() => setSelected(d)}>
@@ -172,6 +144,7 @@ export default function AdminPaymentDisputes() {
             </div>
           ))}
         </div>
+        )}
 
         {/* Dispute Detail Dialog */}
         {selected && (

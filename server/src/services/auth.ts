@@ -585,9 +585,11 @@ export async function validateSession(
   if (!row) return null;
   if (userType) {
     // Check user type via device_info or by looking up the user
-    // For now, we check by querying the users table to determine type
-    if (row.user_id.startsWith("guest_")) {
-      if (userType !== "customer") return null;
+    // Guest sessions use valid UUIDs but have role 'customer' in users table
+    if (userType !== "customer") {
+      // For admin validation, verify this user is actually an admin
+      const user = await queryOne<{ role: string }>("SELECT role FROM users WHERE id = $1", [row.user_id]);
+      if (!user || (user.role !== "super_admin" && user.role !== "admin")) return null;
     }
   }
 
@@ -1544,8 +1546,22 @@ export async function validateAdminPassword(email: string, password: string): Pr
   // Check against database-driven admin user
   const adminUser = await getAdminUserByEmail(email);
   if (adminUser && adminUser.is_active) {
+    // Try plain SHA-256 first (used by initAdminUser)
     const inputHash = await hashCode(password);
-    return inputHash === adminUser.password_hash;
+    if (inputHash === adminUser.password_hash) return true;
+    // Try salted SHA-256 format (salt:hash) used by seed.ts's hashPassword
+    if (adminUser.password_hash.includes(':')) {
+      const parts = adminUser.password_hash.split(':');
+      if (parts.length === 2) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(password + parts[0]);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        const saltedHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+        if (saltedHash === parts[1]) return true;
+      }
+    }
+    return false;
   }
 
   // Fallback: check legacy settings for backward compatibility

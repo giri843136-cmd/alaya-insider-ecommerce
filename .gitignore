@@ -46,6 +46,8 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
+nul
+nul.*
 
 # ---- Logs & Debug ----
 npm-debug.log*

@@ -8,6 +8,8 @@ import { AuthProvider } from "./context/AuthContext";
 import { AccountProvider } from "./context/AccountContext";
 import { ToastProvider } from "./context/ToastContext";
 import { SecurityProvider } from "./context/SecurityContext";
+import { CommerceProvider } from "./context/CommerceContext";
+import { QuickViewProvider } from "./context/QuickViewContext";
 import { Layout } from "./components/Layout";
 import { SiteSchema } from "./components/Seo";
 import { ErrorBoundary } from "./components/ErrorBoundary";
@@ -38,8 +40,12 @@ const AppProviders = composeProviderGroups(
   /* Group 2 – Utilities: no Store dependency */
   [SecurityProvider, ToastProvider],
 
-  /* Group 3 – Commerce: depends on Store + Toast (not mounted — affiliate-only mode) */
-  [],
+  /* Group 3 – Commerce: Navbar/CartDrawer use useCommerce for badge counts */
+  // CommerceProvider must be mounted even in affiliate-only mode because
+  // Navbar, CartDrawer, ProductCard, and other storefront components call
+  // useCommerce() on every page render. The /cart and /checkout routes are
+  // guarded by ENABLE_ECOMMERCE flag — they redirect to /shop when disabled.
+  [CommerceProvider, QuickViewProvider],
 );
 
 // Lazy-loaded storefront pages — only loaded when navigated to

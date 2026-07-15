@@ -135,13 +135,22 @@ export function Footer() {
           <FooterLink to="/faq">Help & FAQ</FooterLink>
         </FooterCol>
 
+        <FooterCol title="Editorial">
+          <FooterLink to="/legal/editorial-policy">Editorial Policy</FooterLink>
+          <FooterLink to="/legal/review-methodology">Review Methodology</FooterLink>
+          <FooterLink to="/legal/how-we-test">How We Test</FooterLink>
+          <FooterLink to="/legal/how-we-make-money">How We Make Money</FooterLink>
+          <FooterLink to="/legal/corrections">Corrections Policy</FooterLink>
+          <FooterLink to="/about">About Us</FooterLink>
+        </FooterCol>
+
         <FooterCol title="Policies">
-          <FooterLink to="/legal/shipping">Shipping</FooterLink>
-          <FooterLink to="/legal/refund">Returns & refunds</FooterLink>
-          <FooterLink to="/legal/privacy">Privacy</FooterLink>
-          <FooterLink to="/legal/terms">Terms</FooterLink>
-          <FooterLink to="/legal/affiliate">Affiliate disclosure</FooterLink>
+          <FooterLink to="/legal/affiliate">Affiliate Disclosure</FooterLink>
+          <FooterLink to="/legal/privacy">Privacy Policy</FooterLink>
+          <FooterLink to="/legal/terms">Terms of Service</FooterLink>
+          <FooterLink to="/legal/refund">Returns Policy</FooterLink>
           <FooterLink to="/legal/accessibility">Accessibility</FooterLink>
+          <FooterLink to="/legal/cookie">Cookie Policy</FooterLink>
         </FooterCol>
       </div>
 

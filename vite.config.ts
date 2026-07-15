@@ -52,6 +52,10 @@ export default defineConfig({
           if (id.includes("node_modules/lucide-react/")) {
             return "vendor-icons";
           }
+          // react-router-dom is large and changes independently from React
+          if (id.includes("node_modules/react-router-dom/")) {
+            return "vendor-router";
+          }
           // All other npm dependencies bundled together to avoid
           // circular dependency between vendor-other and vendor-react.
           if (id.includes("node_modules/")) {
@@ -72,7 +76,7 @@ export default defineConfig({
     // Target modern browsers for smaller bundles
     target: "es2020",
     // Chunk size warning
-    chunkSizeWarningLimit: 600,
+    chunkSizeWarningLimit: 500,
   },
 
 

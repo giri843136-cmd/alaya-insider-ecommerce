@@ -2,35 +2,74 @@
  * BackendStatusDot — Live connection status indicator for the admin navbar.
  * Shows a green/amber/red dot based on backend connectivity, with a tooltip
  * showing the backend URL, last sync time, and any error message.
+ *
+ * ⚡ Dynamically imports the backend module to avoid pulling backend.ts +
+ *    api-client + api-endpoints + devops into the main chunk.
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { checkBackendHealth, getBackendStatus, type BackendStatus } from "../../lib/backend";
+import type { BackendStatus } from "../../lib/backend";
 import { cn } from "@/utils/cn";
 
+/** Default status shown before the backend module finishes loading. */
+const INITIAL_STATUS: BackendStatus = {
+  mode: "offline",
+  configured: false,
+  lastSyncAt: null,
+  lastError: null,
+  healthUrl: "",
+};
+
+type BackendModule = { checkBackendHealth(): Promise<boolean>; getBackendStatus(): BackendStatus };
+
+function useBackend() {
+  const modRef = useRef<BackendModule | null>(null);
+  const promiseRef = useRef<Promise<void> | null>(null);
+
+  const ensure = useCallback(async (): Promise<BackendModule | null> => {
+    if (modRef.current) return modRef.current;
+    if (!promiseRef.current) {
+      promiseRef.current = import("../../lib/backend").then((m) => {
+        modRef.current = {
+          checkBackendHealth: m.checkBackendHealth,
+          getBackendStatus: m.getBackendStatus,
+        };
+      }).catch(() => {
+        promiseRef.current = null;
+      });
+    }
+    await promiseRef.current;
+    return modRef.current;
+  }, []);
+
+  return { ensure };
+}
+
 export function BackendStatusDot() {
-  const [status, setStatus] = useState<BackendStatus>(getBackendStatus());
+  const [status, setStatus] = useState<BackendStatus>(INITIAL_STATUS);
   const [healthy, setHealthy] = useState<boolean | null>(null);
   const [checking, setChecking] = useState(false);
   const mounted = useRef(true);
+  const { ensure } = useBackend();
 
   const check = useCallback(async () => {
     if (checking) return;
+    if (!mounted.current) return;
     setChecking(true);
-    const ok = await checkBackendHealth();
+    const loaded = await ensure();
+    if (!mounted.current || !loaded) return;
+    const ok = await loaded.checkBackendHealth();
     if (mounted.current) {
       setHealthy(ok);
-      setStatus(getBackendStatus());
+      setStatus(loaded.getBackendStatus());
       setChecking(false);
     }
-  }, [checking]);
+  }, [checking, ensure]);
 
   useEffect(() => {
     mounted.current = true;
-    // Check on mount
     check();
-    // Re-check every 60 seconds
     const interval = setInterval(check, 60_000);
     return () => {
       mounted.current = false;

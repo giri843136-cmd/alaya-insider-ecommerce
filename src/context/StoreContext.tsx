@@ -38,19 +38,70 @@ import type {
   CustomerTask,
 } from "../lib/types";
 import { CURRENCIES, orderNumber, slugify, uid } from "../lib/utils";
-import { SEED_SETTINGS, SEED_STORE, STORE_VERSION } from "../lib/seed";
 import { isApiConfigured } from "../lib/api-config";
-import { Backend } from "../lib/backend";
+import type { BackendType } from "../lib/backend";
+
+/** Lazy-loaded Backend adapter — avoids pulling in api-client + api-endpoints + devops into the main chunk.
+ *  The module is imported once on first `sync()` call (or `fetchAll`). */
+let _Backend: BackendType | null = null;
+let _backendPromise: Promise<void> | null = null;
+
+async function ensureBackend(): Promise<void> {
+  if (_Backend) return;
+  if (_backendPromise) return _backendPromise;
+  _backendPromise = import("../lib/backend").then((mod) => {
+    _Backend = mod.Backend;
+  }).catch(() => {
+    _backendPromise = null; // allow retry on next call
+  });
+  return _backendPromise;
+}
 
 const STORAGE_KEY = "alaya_store_v11";
+const STORE_VERSION = 11;
+
+/** Inline default settings — avoids pulling in 89 KB seed-data.ts on first load. */
+const DEFAULT_SETTINGS: Settings = {
+  storeName: "ALAYA INSIDER", storeShort: "ALAYA",
+  tagline: "Premium Editorial Shopping — Curated by Experts",
+  description: "ALAYA INSIDER discovers and curates the finest products from around the world.",
+  defaultTheme: "light", defaultLanguage: "en", accentLight: "#9c7a4b", accentDark: "#c9a876",
+  currency: { code: "USD", symbol: "$", rate: 1 },
+  announcement: { enabled: true, text: "Free shipping on orders over $150 | Use code INSIDER15 for 15% off orders $200+", link: "/shop" },
+  announcements: [],
+  heroSlides: [],
+  homeSections: [
+    { id: "sec_hero", label: "Hero Slider", enabled: true },
+    { id: "sec_featured", label: "Featured Products", enabled: true },
+  ],
+  design: { primary: "#211c15", secondary: "#6e6356", accent: "#9c7a4b", success: "#4b7a52", warning: "#b9802f", danger: "#b14b46", info: "#4f6da3", fontHeading: "Playfair Display", fontBody: "Inter", radiusSm: 8, radiusMd: 14, radiusLg: 20, shadowSoft: true, animationSpeed: "normal" },
+  header: { sticky: true, transparent: true, showAnnouncement: true, showMegaMenu: true, showSearch: true, showWishlist: true, showCompare: true, showNotifications: true, showAccount: true, showDarkMode: true, showLanguage: true, showCurrency: true },
+  footer: { showNewsletter: true, showSocial: true, showPolicies: true, showPayments: true, showTrustBadges: true, showAffiliateDisclosure: true },
+  shipping: { freeOver: 150, flatRate: 12 },
+  taxRate: 0.08, contactEmail: "hello@alayainsider.com", supportEmail: "support@alayainsider.com",
+  contactPhone: "+1 (212) 555-0198", address: "200 Park Avenue South, Suite 1500, New York, NY 10003",
+  social: { instagram: "https://instagram.com/alayainsider", pinterest: "https://pinterest.com/alayainsider", tiktok: "https://tiktok.com/@alayainsider", youtube: "https://youtube.com/@alayainsider", x: "https://x.com/alayainsider" },
+  seo: { title: "ALAYA INSIDER — Premium Editorial Shopping", description: "Discover the finest curated products from around the world.", keywords: "premium shopping, curated products, ALAYA INSIDER", ogImage: "", twitterHandle: "@alayainsider" },
+  features: { wishlist: true, compare: true, recentlyViewed: true, darkMode: true, affiliate: true, reviews: true, digital: true, coupons: true, brands: true, journal: true, accounts: true, multiLanguage: true },
+  adminEmail: "alayainsider@gmail.com", adminPhone: "+91 8431364706", adminPassword: "Alaya@1923",
+  mfaMethod: "email_sms", totpSecret: "", totpVerified: false, totpBackupCodes: [],
+};
+
+const EMPTY_STORE: StoreData = {
+  version: STORE_VERSION,
+  products: [], categories: [], brands: [], orders: [], coupons: [], articles: [], customers: [],
+  questions: [], suppliers: [], paymentGateways: [], returns: [], redirects: [], popups: [],
+  abandonedCarts: [], referrals: [], loyaltyTiers: [], liveSales: [], supportTickets: [],
+  affiliates: [], auditLogs: [], settings: DEFAULT_SETTINGS,
+};
 
 function loadStore(): StoreData {
-  if (typeof window === "undefined") return SEED_STORE;
+  if (typeof window === "undefined") return EMPTY_STORE;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return SEED_STORE;
+    if (!raw) return EMPTY_STORE;
     const parsed = JSON.parse(raw) as StoreData;
-    if (!parsed || parsed.version !== STORE_VERSION) return SEED_STORE;
+    if (!parsed || parsed.version !== STORE_VERSION) return EMPTY_STORE;
     // merge-proof: ensure newer arrays exist on older persisted blobs
     const merged: StoreData = {
       ...parsed,
@@ -70,18 +121,18 @@ function loadStore(): StoreData {
     };
     // backfill newer settings arrays without clobbering existing values
     merged.settings = {
-      ...SEED_SETTINGS,
+      ...DEFAULT_SETTINGS,
       ...parsed.settings,
-      announcements: parsed.settings.announcements ?? SEED_SETTINGS.announcements,
-      heroSlides: parsed.settings.heroSlides?.length ? parsed.settings.heroSlides : SEED_SETTINGS.heroSlides,
-      homeSections: parsed.settings.homeSections?.length ? parsed.settings.homeSections : SEED_SETTINGS.homeSections,
-      design: parsed.settings.design ?? SEED_SETTINGS.design,
-      header: parsed.settings.header ?? SEED_SETTINGS.header,
-      footer: parsed.settings.footer ?? SEED_SETTINGS.footer,
+      announcements: parsed.settings.announcements ?? DEFAULT_SETTINGS.announcements,
+      heroSlides: parsed.settings.heroSlides?.length ? parsed.settings.heroSlides : DEFAULT_SETTINGS.heroSlides,
+      homeSections: parsed.settings.homeSections?.length ? parsed.settings.homeSections : DEFAULT_SETTINGS.homeSections,
+      design: parsed.settings.design ?? DEFAULT_SETTINGS.design,
+      header: parsed.settings.header ?? DEFAULT_SETTINGS.header,
+      footer: parsed.settings.footer ?? DEFAULT_SETTINGS.footer,
     };
     return merged;
   } catch {
-    return SEED_STORE;
+    return EMPTY_STORE;
   }
 }
 
@@ -256,12 +307,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   /*  BACKEND SYNC                                                   */
   /* ============================================================== */
 
+  // On mount, hydrate seed data if store is empty (first visit — localStorage was empty)
+  useEffect(() => {
+    if (data.products.length > 0) return; // Already has data from localStorage
+    let cancelled = false;
+    (async () => {
+      try {
+        const { SEED_STORE } = await import("../lib/seed");
+        if (cancelled) return;
+        setData((prev) => {
+          // Only seed if still empty
+          if (prev.products.length > 0) return prev;
+          return { ...SEED_STORE, settings: { ...SEED_STORE.settings, ...prev.settings } };
+        });
+      } catch {
+        // Seed data failed to load — app will show empty state
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [data.products.length]);
+
   // On mount, hydrate from backend if configured
   useEffect(() => {
     if (!isApiConfigured()) return;
     let cancelled = false;
     (async () => {
-      const remote = await Backend.fetchAll();
+      await ensureBackend();
+      if (!_Backend) return;
+      const remote = await _Backend.fetchAll();
       if (cancelled || !remote) return;
       setData((prev) => ({
         ...prev,
@@ -286,13 +359,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => { cancelled = true; };
   }, []);
 
-  /** Fire-and-forget sync helper — calls Backend after local state is updated. */
+  /** Fire-and-forget sync helper — calls Backend after local state is updated.
+   *  Backend is dynamically imported on first call to keep the main chunk lean. */
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-constraint
-  const sync = useCallback(<T extends unknown>(fn: () => Promise<T>) => {
+  const sync = useCallback(<T extends unknown>(fn: (backend: BackendType) => Promise<T>) => {
     if (!isApiConfigured()) return;
-    fn().catch(() => {
-      /* Backend sync failed — local state is already persisted via localStorage */
-    });
+    (async () => {
+      await ensureBackend();
+      if (_Backend) {
+        fn(_Backend).catch(() => {});
+      }
+    })();
   }, []);
 
   /* ----------------------------- Lookups ------------------------------ */
@@ -355,7 +432,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     setData((d) => ({ ...d, products: [product, ...d.products] }));
     log("product.create", "product", product.id);
-    sync(() => Backend.createProduct({ ...p, id: product.id }));
+    sync((backend) => backend.createProduct({ ...p, id: product.id }));
     return product;
   }, [log, sync]);
 
@@ -369,13 +446,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       ),
     }));
     log("product.update", "product", id);
-    sync(() => Backend.updateProduct(id, patch));
+    sync((backend) => backend.updateProduct(id, patch));
   }, [log, sync]);
 
   const deleteProduct = useCallback((id: string) => {
     setData((d) => ({ ...d, products: d.products.filter((p) => p.id !== id) }));
     log("product.delete", "product", id);
-    sync(() => Backend.deleteProduct(id));
+    sync((backend) => backend.deleteProduct(id));
   }, [log, sync]);
 
   const cloneProduct = useCallback(
@@ -409,7 +486,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const bulkDeleteProducts = useCallback((ids: string[]) => {
     setData((d) => ({ ...d, products: d.products.filter((p) => !ids.includes(p.id)) }));
     log("product.bulkDelete", "product", ids.join(","), `${ids.length} items`);
-    sync(() => Backend.bulkDeleteProducts(ids));
+    sync((backend) => backend.bulkDeleteProducts(ids));
   }, [log, sync]);
 
   /* ---------------------------- Categories ---------------------------- */
@@ -423,20 +500,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     setData((d) => ({ ...d, categories: [...d.categories, category] }));
     log("category.create", "category", category.id);
-    sync(() => Backend.createCategory({ ...c, id: category.id }));
+    sync((backend) => backend.createCategory({ ...c, id: category.id }));
     return category;
   }, [log, sync]);
 
   const updateCategory = useCallback((id: string, patch: Partial<Category>) => {
     setData((d) => ({ ...d, categories: d.categories.map((c) => (c.id === id ? { ...c, ...patch } : c)) }));
     log("category.update", "category", id);
-    sync(() => Backend.updateCategory(id, patch));
+    sync((backend) => backend.updateCategory(id, patch));
   }, [log, sync]);
 
   const deleteCategory = useCallback((id: string) => {
     setData((d) => ({ ...d, categories: d.categories.filter((c) => c.id !== id) }));
     log("category.delete", "category", id);
-    sync(() => Backend.deleteCategory(id));
+    sync((backend) => backend.deleteCategory(id));
   }, [log, sync]);
 
   /* ------------------------------ Brands ------------------------------ */
@@ -453,20 +530,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     setData((d) => ({ ...d, brands: [...d.brands, brand] }));
     log("brand.create", "brand", brand.id);
-    sync(() => Backend.createBrand({ ...b, id: brand.id }));
+    sync((backend) => backend.createBrand({ ...b, id: brand.id }));
     return brand;
   }, [log, sync]);
 
   const updateBrand = useCallback((id: string, patch: Partial<Brand>) => {
     setData((d) => ({ ...d, brands: d.brands.map((b) => (b.id === id ? { ...b, ...patch } : b)) }));
     log("brand.update", "brand", id);
-    sync(() => Backend.updateBrand(id, patch));
+    sync((backend) => backend.updateBrand(id, patch));
   }, [log, sync]);
 
   const deleteBrand = useCallback((id: string) => {
     setData((d) => ({ ...d, brands: d.brands.filter((b) => b.id !== id) }));
     log("brand.delete", "brand", id);
-    sync(() => Backend.deleteBrand(id));
+    sync((backend) => backend.deleteBrand(id));
   }, [log, sync]);
 
   /* ------------------------------ Orders ------------------------------ */
@@ -501,7 +578,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       return { ...d, orders: [order, ...d.orders], coupons };
     });
     log("order.create", "order", order.id, order.number, order.customer.email || "customer");
-    sync(() => Backend.createOrder({
+    sync((backend) => backend.createOrder({
       items: input.items,
       customer: input.customer,
       discount: input.discount,
@@ -517,13 +594,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateOrderStatus = useCallback((id: string, status: OrderStatus) => {
     setData((d) => ({ ...d, orders: d.orders.map((o) => (o.id === id ? { ...o, status } : o)) }));
     log("order.update", "order", id, status);
-    sync(() => Backend.updateOrderStatus(id, status));
+    sync((backend) => backend.updateOrderStatus(id, status));
   }, [log, sync]);
 
   const deleteOrder = useCallback((id: string) => {
     setData((d) => ({ ...d, orders: d.orders.filter((o) => o.id !== id) }));
     log("order.delete", "order", id);
-    sync(() => Backend.deleteOrder(id));
+    sync((backend) => backend.deleteOrder(id));
   }, [log, sync]);
 
   /* ------------------------------ Coupons ----------------------------- */
@@ -542,20 +619,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     setData((d) => ({ ...d, coupons: [...d.coupons, coupon] }));
     log("coupon.create", "coupon", coupon.id, coupon.code);
-    sync(() => Backend.createCoupon({ ...c, id: coupon.id }));
+    sync((backend) => backend.createCoupon({ ...c, id: coupon.id }));
     return coupon;
   }, [log, sync]);
 
   const updateCoupon = useCallback((id: string, patch: Partial<Coupon>) => {
     setData((d) => ({ ...d, coupons: d.coupons.map((c) => (c.id === id ? { ...c, ...patch } : c)) }));
     log("coupon.update", "coupon", id);
-    sync(() => Backend.updateCoupon(id, patch));
+    sync((backend) => backend.updateCoupon(id, patch));
   }, [log, sync]);
 
   const deleteCoupon = useCallback((id: string) => {
     setData((d) => ({ ...d, coupons: d.coupons.filter((c) => c.id !== id) }));
     log("coupon.delete", "coupon", id);
-    sync(() => Backend.deleteCoupon(id));
+    sync((backend) => backend.deleteCoupon(id));
   }, [log, sync]);
 
   const validateCoupon = useCallback(
@@ -595,20 +672,20 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     setData((d) => ({ ...d, articles: [article, ...d.articles] }));
     log("article.create", "article", article.id);
-    sync(() => Backend.createArticle({ ...a, id: article.id }));
+    sync((backend) => backend.createArticle({ ...a, id: article.id }));
     return article;
   }, [log, sync]);
 
   const updateArticle = useCallback((id: string, patch: Partial<Article>) => {
     setData((d) => ({ ...d, articles: d.articles.map((a) => (a.id === id ? { ...a, ...patch } : a)) }));
     log("article.update", "article", id);
-    sync(() => Backend.updateArticle(id, patch));
+    sync((backend) => backend.updateArticle(id, patch));
   }, [log, sync]);
 
   const deleteArticle = useCallback((id: string) => {
     setData((d) => ({ ...d, articles: d.articles.filter((a) => a.id !== id) }));
     log("article.delete", "article", id);
-    sync(() => Backend.deleteArticle(id));
+    sync((backend) => backend.deleteArticle(id));
   }, [log, sync]);
 
   /* ----------------------------- Questions ---------------------------- */
@@ -623,7 +700,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         date: new Date().toISOString(),
       };
       setData((d) => ({ ...d, questions: [q, ...d.questions] }));
-      sync(() => Backend.createQuestion(productId, author, question));
+      sync((backend) => backend.createQuestion(productId, author, question));
       return q;
     },
     [sync]
@@ -635,7 +712,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       questions: d.questions.map((q) => (q.id === id ? { ...q, answer, answeredBy } : q)),
     }));
     log("question.answer", "question", id);
-    sync(() => Backend.answerQuestion(id, answer, answeredBy));
+    sync((backend) => backend.answerQuestion(id, answer, answeredBy));
   }, [log, sync]);
 
   const voteQuestion = useCallback((id: string) => {
@@ -662,18 +739,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       createdAt: Date.now(),
     };
     setData((d) => ({ ...d, redirects: [redirect, ...d.redirects] }));
-    sync(() => Backend.createRedirect({ ...r, id: redirect.id }));
+    sync((backend) => backend.createRedirect({ ...r, id: redirect.id }));
     return redirect;
   }, [sync]);
 
   const updateRedirect = useCallback((id: string, patch: Partial<Redirect>) => {
     setData((d) => ({ ...d, redirects: d.redirects.map((r) => (r.id === id ? { ...r, ...patch } : r)) }));
-    sync(() => Backend.updateRedirect(id, patch));
+    sync((backend) => backend.updateRedirect(id, patch));
   }, [sync]);
 
   const deleteRedirect = useCallback((id: string) => {
     setData((d) => ({ ...d, redirects: d.redirects.filter((r) => r.id !== id) }));
-    sync(() => Backend.deleteRedirect(id));
+    sync((backend) => backend.deleteRedirect(id));
   }, [sync]);
 
   /** Loop detection: returns true if following `to` chains back to `from`. */
@@ -711,18 +788,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       conversions: p.conversions ?? 0,
     };
     setData((d) => ({ ...d, popups: [popup, ...d.popups] }));
-    sync(() => Backend.createPopup({ ...p, id: popup.id }));
+    sync((backend) => backend.createPopup({ ...p, id: popup.id }));
     return popup;
   }, [sync]);
 
   const updatePopup = useCallback((id: string, patch: Partial<Popup>) => {
     setData((d) => ({ ...d, popups: d.popups.map((p) => (p.id === id ? { ...p, ...patch } : p)) }));
-    sync(() => Backend.updatePopup(id, patch));
+    sync((backend) => backend.updatePopup(id, patch));
   }, [sync]);
 
   const deletePopup = useCallback((id: string) => {
     setData((d) => ({ ...d, popups: d.popups.filter((p) => p.id !== id) }));
-    sync(() => Backend.deletePopup(id));
+    sync((backend) => backend.deletePopup(id));
   }, [sync]);
 
   /** Records a popup impression/conversion (analytics). */
@@ -733,7 +810,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         p.id === id ? { ...p, views: p.views + 1, conversions: p.conversions + (converted ? 1 : 0) } : p
       ),
     }));
-    sync(() => Backend.trackPopup(id, converted));
+    sync((backend) => backend.trackPopup(id, converted));
   }, [sync]);
 
   /* -------------------------- Abandoned carts ------------------------- */
@@ -774,25 +851,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   /* --------------------------- Loyalty tiers -------------------------- */
   const updateTier = useCallback((id: string, patch: Partial<LoyaltyTier>) => {
     setData((d) => ({ ...d, loyaltyTiers: d.loyaltyTiers.map((t) => (t.id === id ? { ...t, ...patch } : t)) }));
-    sync(() => Backend.updateLoyaltyTier(id, patch));
+    sync((backend) => backend.updateLoyaltyTier(id, patch));
   }, [sync]);
 
   const addTier = useCallback((t: Partial<LoyaltyTier> & { name: string }) => {
     const tier: LoyaltyTier = { id: t.id ?? uid("tier"), name: t.name, minPoints: t.minPoints ?? 0, perk: t.perk ?? "" };
     setData((d) => ({ ...d, loyaltyTiers: [...d.loyaltyTiers, tier] }));
-    sync(() => Backend.createLoyaltyTier({ ...t, id: tier.id }));
+    sync((backend) => backend.createLoyaltyTier({ ...t, id: tier.id }));
     return tier;
   }, [sync]);
 
   const deleteTier = useCallback((id: string) => {
     setData((d) => ({ ...d, loyaltyTiers: d.loyaltyTiers.filter((t) => t.id !== id) }));
-    sync(() => Backend.deleteLoyaltyTier(id));
+    sync((backend) => backend.deleteLoyaltyTier(id));
   }, [sync]);
 
   /* ------------------------------ Live sales -------------------------- */
   const addLiveSale = useCallback((s: Omit<LiveSale, "id">) => {
     setData((d) => ({ ...d, liveSales: [{ ...s, id: uid("ls") }, ...d.liveSales].slice(0, 50) }));
-    sync(() => Backend.createLiveSale(s));
+    sync((backend) => backend.createLiveSale(s));
   }, [sync]);
 
   /* ----------------------------- Suppliers ---------------------------- */
@@ -809,19 +886,19 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     setData((d) => ({ ...d, suppliers: [...d.suppliers, supplier] }));
     log("supplier.create", "supplier", supplier.id);
-    sync(() => Backend.createSupplier({ ...s, id: supplier.id }));
+    sync((backend) => backend.createSupplier({ ...s, id: supplier.id }));
     return supplier;
   }, [log, sync]);
 
   const updateSupplier = useCallback((id: string, patch: Partial<Supplier>) => {
     setData((d) => ({ ...d, suppliers: d.suppliers.map((s) => (s.id === id ? { ...s, ...patch } : s)) }));
-    sync(() => Backend.updateSupplier(id, patch));
+    sync((backend) => backend.updateSupplier(id, patch));
   }, [sync]);
 
   const deleteSupplier = useCallback((id: string) => {
     setData((d) => ({ ...d, suppliers: d.suppliers.filter((s) => s.id !== id) }));
     log("supplier.delete", "supplier", id);
-    sync(() => Backend.deleteSupplier(id));
+    sync((backend) => backend.deleteSupplier(id));
   }, [log, sync]);
 
   /** Auto-determines the best active supplier by priority (with fallback). */
@@ -849,18 +926,18 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       countries: g.countries ?? [],
     };
     setData((d) => ({ ...d, paymentGateways: [...d.paymentGateways, gateway] }));
-    sync(() => Backend.createGateway({ ...g, id: gateway.id }));
+    sync((backend) => backend.createGateway({ ...g, id: gateway.id }));
     return gateway;
   }, [sync]);
 
   const updateGateway = useCallback((id: string, patch: Partial<PaymentGateway>) => {
     setData((d) => ({ ...d, paymentGateways: d.paymentGateways.map((g) => (g.id === id ? { ...g, ...patch } : g)) }));
-    sync(() => Backend.updateGateway(id, patch));
+    sync((backend) => backend.updateGateway(id, patch));
   }, [sync]);
 
   const deleteGateway = useCallback((id: string) => {
     setData((d) => ({ ...d, paymentGateways: d.paymentGateways.filter((g) => g.id !== id) }));
-    sync(() => Backend.deleteGateway(id));
+    sync((backend) => backend.deleteGateway(id));
   }, [sync]);
 
   /** Returns active gateways valid for a given destination country. */
@@ -884,7 +961,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       };
       setData((d) => ({ ...d, returns: [ret, ...d.returns] }));
       log("return.create", "return", ret.id, ret.number);
-      sync(() => Backend.createReturn(input));
+      sync((backend) => backend.createReturn(input));
       return ret;
     },
     [log, sync]
@@ -893,7 +970,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const updateReturn = useCallback((id: string, patch: Partial<ReturnRequest>) => {
     setData((d) => ({ ...d, returns: d.returns.map((r) => (r.id === id ? { ...r, ...patch } : r)) }));
     log("return.update", "return", id);
-    sync(() => Backend.updateReturn(id, patch));
+    sync((backend) => backend.updateReturn(id, patch));
   }, [log, sync]);
 
   /* --------------------------- Email logging -------------------------- */
@@ -953,7 +1030,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       };
       setData((d) => ({ ...d, customers: [...d.customers, customer] }));
       log("customer.register", "customer", customer.id, email, email);
-      sync(() => Backend.registerCustomer(name, email, password));
+      sync((backend) => backend.registerCustomer(name, email, password));
       return customer;
     },
     [data.customers, log, sync]
@@ -969,13 +1046,13 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const updateCustomer = useCallback((id: string, patch: Partial<Customer>) => {
     setData((d) => ({ ...d, customers: d.customers.map((c) => (c.id === id ? { ...c, ...patch } : c)) }));
-    sync(() => Backend.updateCustomer(id, patch));
+    sync((backend) => backend.updateCustomer(id, patch));
   }, [sync]);
 
   const deleteCustomer = useCallback((id: string) => {
     setData((d) => ({ ...d, customers: d.customers.filter((c) => c.id !== id) }));
     log("customer.delete", "customer", id);
-    sync(() => Backend.deleteCustomer(id));
+    sync((backend) => backend.deleteCustomer(id));
   }, [log, sync]);
 
   const addCustomerAddress = useCallback((id: string, address: Omit<Address, "id">) => {
@@ -998,27 +1075,27 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     };
     setData((d) => ({ ...d, affiliates: [...d.affiliates, affiliate] }));
     log("affiliate.create", "affiliate", affiliate.id);
-    sync(() => Backend.createAffiliate({ ...a, id: affiliate.id }));
+    sync((backend) => backend.createAffiliate({ ...a, id: affiliate.id }));
     return affiliate;
   }, [log, sync]);
 
   const updateAffiliate = useCallback((id: string, patch: Partial<AffPartner>) => {
     setData((d) => ({ ...d, affiliates: d.affiliates.map((a) => (a.id === id ? { ...a, ...patch } : a)) }));
     log("affiliate.update", "affiliate", id);
-    sync(() => Backend.updateAffiliate(id, patch));
+    sync((backend) => backend.updateAffiliate(id, patch));
   }, [log, sync]);
 
   const deleteAffiliate = useCallback((id: string) => {
     setData((d) => ({ ...d, affiliates: d.affiliates.filter((a) => a.id !== id) }));
     log("affiliate.delete", "affiliate", id);
-    sync(() => Backend.deleteAffiliate(id));
+    sync((backend) => backend.deleteAffiliate(id));
   }, [log, sync]);
 
   /* ------------------------------- CRM ------------------------------- */
   const addCustomerNote = useCallback((customerId: string, author: string, body: string, pinned = false, isPrivate = false) => {
     const note: CustomerNote = { id: uid("note"), author, body, pinned, private: isPrivate, ts: Date.now() };
     setData((d) => ({ ...d, customers: d.customers.map((c) => c.id === customerId ? { ...c, notes: [note, ...c.notes] } : c) }));
-    sync(() => Backend.addCustomerNote(customerId, author, body, pinned));
+    sync((backend) => backend.addCustomerNote(customerId, author, body, pinned));
   }, [sync]);
 
   const deleteCustomerNote = useCallback((customerId: string, noteId: string) => {
@@ -1028,7 +1105,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addCustomerTask = useCallback((customerId: string, task: Omit<CustomerTask, "id" | "ts">) => {
     const t: CustomerTask = { ...task, id: uid("task"), ts: Date.now() };
     setData((d) => ({ ...d, customers: d.customers.map((c) => c.id === customerId ? { ...c, tasks: [...c.tasks, t] } : c) }));
-    sync(() => Backend.addCustomerTask(customerId, { title: task.title, type: task.type, assignee: task.assignee, priority: task.priority }));
+    sync((backend) => backend.addCustomerTask(customerId, { title: task.title, type: task.type, assignee: task.assignee, priority: task.priority }));
   }, [sync]);
 
   const toggleCustomerTask = useCallback((customerId: string, taskId: string) => {
@@ -1038,25 +1115,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const addTimelineEvent = useCallback((customerId: string, type: TimelineEvent["type"], label: string, meta?: string) => {
     const evt: TimelineEvent = { id: uid("tl"), type, label, ts: Date.now(), meta };
     setData((d) => ({ ...d, customers: d.customers.map((c) => c.id === customerId ? { ...c, timeline: [evt, ...c.timeline] } : c) }));
-    sync(() => Backend.addTimelineEvent(customerId, type, label, meta));
+    sync((backend) => backend.addTimelineEvent(customerId, type, label, meta));
   }, [sync]);
 
   const replyTicket = useCallback((id: string, author: string, body: string) => {
     setData((d) => ({ ...d, supportTickets: d.supportTickets.map((t) => t.id === id ? { ...t, messages: [...t.messages, { author, body, ts: Date.now() }], status: "pending" } : t) }));
     log("ticket.reply", "support_ticket", id);
-    sync(() => Backend.replyToTicket(id, author, body));
+    sync((backend) => backend.replyToTicket(id, author, body));
   }, [log, sync]);
 
   const updateTicketStatus = useCallback((id: string, status: SupportTicket["status"]) => {
     setData((d) => ({ ...d, supportTickets: d.supportTickets.map((t) => t.id === id ? { ...t, status } : t) }));
-    sync(() => Backend.updateTicketStatus(id, status));
+    sync((backend) => backend.updateTicketStatus(id, status));
   }, [sync]);
 
   /* ----------------------------- Settings ----------------------------- */
   const updateSettings = useCallback((patch: Partial<Settings>) => {
     setData((d) => ({ ...d, settings: { ...d.settings, ...patch } }));
     log("settings.update", "settings");
-    sync(() => Backend.updateSettings(patch));
+    sync((backend) => backend.updateSettings(patch));
   }, [log, sync]);
 
   const setCurrency = useCallback((code: string) => {
@@ -1064,7 +1141,9 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     setData((d) => ({ ...d, settings: { ...d.settings, currency: next } }));
   }, []);
 
-  const resetData = useCallback(() => setData(SEED_STORE), []);
+  const resetData = useCallback(() => {
+    import("../lib/seed").then(({ SEED_STORE }) => setData(SEED_STORE)).catch(() => {});
+  }, []);
 
   const value = useMemo<StoreContextValue>(
     () => ({

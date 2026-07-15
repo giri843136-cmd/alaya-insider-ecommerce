@@ -8,12 +8,11 @@ import { AuthProvider } from "./context/AuthContext";
 import { AccountProvider } from "./context/AccountContext";
 import { ToastProvider } from "./context/ToastContext";
 import { SecurityProvider } from "./context/SecurityContext";
-import { CommerceProvider } from "./context/CommerceContext";
-import { QuickViewProvider } from "./context/QuickViewContext";
 import { Layout } from "./components/Layout";
 import { SiteSchema } from "./components/Seo";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import AdminLayout, { ProtectedRoute } from "./components/admin/AdminLayout";
+import { ProtectedRoute } from "./components/admin/ProtectedRoute";
+import { flags } from "./lib/featureFlags";
 
 /* ================================================================== */
 /*  PROVIDER ARCHITECTURE                                              */
@@ -39,11 +38,12 @@ const AppProviders = composeProviderGroups(
   /* Group 2 – Utilities: no Store dependency */
   [SecurityProvider, ToastProvider],
 
-  /* Group 3 – Commerce: depends on Store + Toast */
-  [CommerceProvider, QuickViewProvider],
+  /* Group 3 – Commerce: depends on Store + Toast (not mounted — affiliate-only mode) */
+  [],
 );
 
 // Lazy-loaded storefront pages — only loaded when navigated to
+const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
 const Home = lazy(() => import("./pages/Home"));
 const Shop = lazy(() => import("./pages/Shop"));
 const ProductDetail = lazy(() => import("./pages/ProductDetail"));
@@ -227,8 +227,8 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/shop" element={<Shop />} />
               <Route path="/product/:slug" element={<ProductDetail />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/cart" element={flags.ENABLE_ECOMMERCE ? <Cart /> : <Navigate to="/shop" replace />} />
+              <Route path="/checkout" element={flags.ENABLE_ECOMMERCE ? <Checkout /> : <Navigate to="/shop" replace />} />
               <Route path="/wishlist" element={<Wishlist />} />
               <Route path="/compare" element={<Compare />} />
               <Route path="/account" element={<Account />} />

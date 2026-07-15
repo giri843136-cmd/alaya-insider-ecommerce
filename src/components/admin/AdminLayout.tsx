@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { NavLink, Navigate, Outlet, Link, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, Link, useNavigate } from "react-router-dom";
 import { CommandPalette } from "./CommandPalette";
 import { useSecurity } from "../../context/SecurityContext";
 import {
@@ -75,7 +75,7 @@ import { cn } from "@/utils/cn";
 import { BackendStatusDot } from "./BackendStatusDot";
 
 /* ================================================================== */
-/*  ENTERPRISE PROVIDERS — lazy-mounted only for admin pages           */
+/*  ENTERPRISE PROVIDERS — mounted only for admin pages                */
 /*  These providers are only mounted when admin routes are accessed,   */
 /*  reducing unnecessary renders and bundle cost on storefront pages.  */
 /* ================================================================== */
@@ -88,12 +88,6 @@ import { DataProvider } from "../../context/DataContext";
 import { IntelligenceProvider } from "../../context/IntelligenceContext";
 import { BusinessIntelligenceProvider } from "../../context/BusinessIntelligenceContext";
 import { DamProvider } from "../../lib/damContext";
-
-export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAdmin } = useAuth();
-  if (!isAdmin) return <Navigate to="/admin/login" replace />;
-  return <>{children}</>;
-}
 
 const NAV = [
   { to: "/admin", end: true, label: "Dashboard", icon: LayoutDashboard },

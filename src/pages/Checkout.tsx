@@ -168,13 +168,13 @@ export default function Checkout() {
       .then(res => res.json())
       .then(result => {
         if (result.success) {
-          console.log(`[Orchestrator] Fulfillment saga completed: ${result.completedSteps?.length} steps`);
+          // Fulfillment saga completed
         } else {
-          console.warn(`[Orchestrator] Fulfillment saga compensated after: ${result.failedStep}`, result.error);
+          // Fulfillment saga compensated
         }
       })
-      .catch(err => {
-        console.warn("[Orchestrator] Fulfillment trigger failed (async):", err);
+      .catch(_err => {
+        // Orchestrator async trigger failed
       });
 
     if (fraud.flagged) {

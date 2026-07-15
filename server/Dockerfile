@@ -65,9 +65,6 @@ EXPOSE 3001
 
 # Health check (pure Node.js — no external deps needed)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-
-# Health check (pure Node.js — no external deps needed)
-HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:'+(process.env.PORT||3001)+'/api/v1/system/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
 
 # Start the compiled server

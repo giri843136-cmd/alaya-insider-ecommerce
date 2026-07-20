@@ -485,6 +485,7 @@ auth.post("/auth/admin/verify-otp", async (c) => {
 
     if (backupCode && code === backupCode) {
       verification = { success: true, message: "Backup code accepted." };
+      console.log(`[AUTH] Admin backup code used for ${identifier}`);
     } else {
       verification = await verifyOtp(identifier, code, "admin_mfa");
     }

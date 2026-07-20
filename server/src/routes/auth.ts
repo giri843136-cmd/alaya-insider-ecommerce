@@ -406,7 +406,9 @@ auth.post("/auth/admin/send-email-otp", async (c) => {
     );
     const adminPhone = typeof adminPhoneRow?.value === 'string' ? adminPhoneRow.value : "";
     if (adminPhone) {
-      sendOtp(adminPhone, "admin_mfa", "sms", code).catch(() => {});
+      sendOtp(adminPhone, "admin_mfa", "sms", code).catch((err: Error) => {
+        console.error(`[SMS] OTP delivery failed: ${err.message}`);
+      });
     }
 
     return c.json({

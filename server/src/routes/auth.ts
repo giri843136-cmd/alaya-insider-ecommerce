@@ -480,7 +480,7 @@ auth.post("/auth/admin/verify-otp", async (c) => {
     }
 
     // Check for ADMIN_BACKUP_CODE env var — allows bypassing OTP when set
-    const backupCode = process.env.ADMIN_BACKUP_CODE;
+    const backupCode = (process.env.ADMIN_BACKUP_CODE || "").trim();
     let verification: { success: boolean; message: string };
 
     if (backupCode && code === backupCode) {

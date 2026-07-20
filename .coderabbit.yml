@@ -1,0 +1,25 @@
+# CodeRabbit AI Code Review Configuration
+# Docs: https://docs.coderabbit.ai/
+# This repo is RELEASE LOCKED - only emergency fixes allowed
+
+language: "en-US"
+early_access: false
+reviews:
+  profile: "chill"                  # Chill: light review for release-locked repo
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false                   # Don't review draft PRs
+    base_branches:
+      - "master"
+  path_filters:
+    - "!**/dist/**"                 # Skip built files
+    - "!**/node_modules/**"         # Skip dependencies
+    - "!**/public/**"               # Skip static assets
+    - "!**/*.map"                   # Skip sourcemaps
+chat:
+  auto_reply: true

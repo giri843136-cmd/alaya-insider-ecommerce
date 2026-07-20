@@ -1,0 +1,39 @@
+import{r as c,j as e}from"./vendor-react-BFP5WcJ4.js";import{u as w,C as A,g as k,c as g}from"./index-cI_eaD76.js";import{aq as v,bo as f,i as b,o as $,c as I,a8 as P,R as j,h as y,bE as T,aW as E}from"./vendor-icons-DNgWBI8n.js";const d=[{id:"titles",label:"Product Titles",icon:f,desc:"Generate SEO-optimized product titles"},{id:"descriptions",label:"Descriptions",icon:f,desc:"Write compelling product descriptions"},{id:"specs",label:"Specifications",icon:b,desc:"Generate technical specification tables"},{id:"faqs",label:"FAQs",icon:v,desc:"Create product Q&A content"},{id:"meta",label:"Meta Tags",icon:$,desc:"Generate meta titles & descriptions"},{id:"tags",label:"Product Tags",icon:b,desc:"Suggest relevant product tags"},{id:"pricing",label:"Pricing Suggestions",icon:I,desc:"AI-driven price optimization"},{id:"forecast",label:"Inventory Forecast",icon:P,desc:"Predict demand and stock needs"}];function R(i,s){return{titles:{default:`• Premium ${s} – Elevate Your Everyday
+• ${s} | Handcrafted with Care
+• Discover the ${s} Collection
+• ${s} – Where Quality Meets Design
+• The Ultimate ${s} Buying Guide`},descriptions:{default:`Experience the exceptional craftsmanship of our ${s}. Every detail has been thoughtfully designed to bring beauty and function to your daily routine.
+
+Crafted from premium, sustainably sourced materials, this piece represents the perfect balance of form and function. Whether you're treating yourself or searching for the perfect gift, ${s} delivers an unparalleled experience.
+
+Key benefits:
+• Premium quality materials
+• Thoughtfully designed for everyday use
+• Sustainably crafted with care
+• Backed by our satisfaction guarantee`},specs:{default:`• Material: Premium-grade materials
+• Dimensions: Standard fit
+• Weight: Lightweight yet durable
+• Color: Available in multiple finishes
+• Care: Easy maintenance
+• Origin: Artisan crafted`},faqs:{default:`Q: What materials are used?
+A: Our products are crafted from premium, sustainably sourced materials to ensure durability and beauty.
+
+Q: How do I care for this product?
+A: We recommend following the included care instructions. Most products are easy to maintain.
+
+Q: What is the return policy?
+A: We offer a 30-day satisfaction guarantee on all products.
+
+Q: Is this product available in other colors?
+A: Yes, several color options are available. Check the product page for options.`},meta:{default:`Meta Title: ${s} | Premium Quality | ALAYA INSIDER
+Meta Description: Discover the ${s} at ALAYA INSIDER. Premium quality, handcrafted with care. Free shipping on orders over $150. Shop now.`},tags:{default:`${s.toLowerCase().replace(/\s+/g,"-")}, premium, handcrafted, artisan, luxury, curated, gift-ideas, home-essentials, quality-crafted, sustainable`},pricing:{default:`• Current Price Range: Competitive market position
+• Suggested Retail: $45 - $150 (based on category)
+• Recommended Margin: 35-50%
+• Competitor Analysis: Aligned with premium segment
+• Promotional Strategy: Bundle with complementary products
+• Flash Sale Candidate: Consider for seasonal promotions`},forecast:{default:`• 30-Day Forecast: Steady demand expected
+• 90-Day Trend: Seasonal increase projected
+• Reorder Point: When stock reaches 15 units
+• Optimal Stock Level: 30-50 units
+• Lead Time Buffer: Account for 5-7 day supplier lead time
+• Recommendation: Maintain current stock levels, reorder in 2 weeks`}}[i]?.default||`AI-generated ${i} content for ${s}`}function G(){const{products:i}=w(),{toast:s}=A(),[n,C]=c.useState("titles"),[m,N]=c.useState(i[0]?.id||""),[r,l]=c.useState(""),[o,u]=c.useState(!1),[p,h]=c.useState(!1),a=i.find(t=>t.id===m),x=()=>{if(!a)return s.error("Select a product");u(!0),setTimeout(()=>{l(R(n,a.name)),u(!1)},600)},S=async()=>{try{await navigator.clipboard.writeText(r),h(!0),setTimeout(()=>h(!1),2e3),s.success("Copied to clipboard")}catch{}};return e.jsxs(e.Fragment,{children:[e.jsx(k,{title:"AI Commerce",path:"/admin/commerce/ai"}),e.jsxs("div",{className:"p-5 sm:p-8",children:[e.jsxs("h1",{className:"font-display text-3xl font-semibold text-ink flex items-center gap-3",children:[e.jsx(v,{className:"h-8 w-8 text-accent"}),"AI Commerce"]}),e.jsx("p",{className:"mt-1 text-sm text-muted",children:"Generate product content, pricing suggestions, and forecasts with AI."}),e.jsx("div",{className:"mt-6 grid gap-4 sm:grid-cols-4",children:d.map(t=>e.jsxs("button",{onClick:()=>{C(t.id),l("")},className:g("card p-4 text-left transition-all",n===t.id&&"ring-1 ring-accent/40 bg-accent-soft/10"),children:[e.jsx("span",{className:g("grid h-9 w-9 place-items-center rounded-full",n===t.id?"bg-accent text-accent-ink":"bg-accent-soft text-accent"),children:e.jsx(t.icon,{className:"h-4 w-4"})}),e.jsx("h3",{className:"mt-3 font-semibold text-ink text-sm",children:t.label}),e.jsx("p",{className:"mt-1 text-xs text-muted",children:t.desc})]},t.id))}),e.jsxs("div",{className:"mt-8 card p-5",children:[e.jsxs("div",{className:"flex flex-wrap items-end gap-4",children:[e.jsxs("div",{className:"flex-1 min-w-[200px]",children:[e.jsx("label",{className:"label-field",children:"Select Product"}),e.jsx("select",{className:"input-field",value:m,onChange:t=>N(t.target.value),children:i.map(t=>e.jsx("option",{value:t.id,children:t.name},t.id))})]}),e.jsxs("div",{children:[e.jsx("label",{className:"label-field",children:" "}),e.jsxs("button",{onClick:x,disabled:o,className:"btn-primary btn-md",children:[o?e.jsx(j,{className:"h-4 w-4 animate-spin"}):e.jsx(y,{className:"h-4 w-4"}),o?"Generating…":`Generate ${d.find(t=>t.id===n)?.label}`]})]})]}),a&&e.jsxs("div",{className:"mt-4 flex items-center gap-3 rounded-xl bg-surface2/50 p-3",children:[e.jsx("img",{src:a.images[0],alt:"",className:"h-12 w-10 rounded-lg object-cover"}),e.jsxs("div",{children:[e.jsx("p",{className:"font-medium text-ink",children:a.name}),e.jsxs("p",{className:"text-xs text-muted",children:[a.category," · $",a.price]})]})]}),r&&e.jsxs("div",{className:"mt-6",children:[e.jsxs("div",{className:"flex items-center justify-between mb-2",children:[e.jsxs("h3",{className:"text-sm font-semibold text-ink",children:["Generated ",d.find(t=>t.id===n)?.label]}),e.jsxs("button",{onClick:S,className:"btn-ghost btn-sm",children:[p?e.jsx(T,{className:"h-4 w-4 text-success"}):e.jsx(E,{className:"h-4 w-4"}),p?"Copied":"Copy"]})]}),e.jsx("textarea",{readOnly:!0,rows:10,className:"input-field w-full resize-none font-mono text-xs",value:r}),e.jsxs("div",{className:"mt-3 flex gap-2",children:[e.jsxs("button",{onClick:x,className:"btn-accent-soft btn-sm",children:[e.jsx(j,{className:"h-3.5 w-3.5"})," Regenerate"]}),e.jsx("button",{onClick:()=>{l("")},className:"btn-ghost btn-sm",children:"Clear"})]})]})]}),e.jsxs("div",{className:"mt-6 card p-5 bg-accent-soft/10 border-accent/10",children:[e.jsxs("h3",{className:"flex items-center gap-2 font-semibold text-ink",children:[e.jsx(y,{className:"h-4 w-4 text-accent"})," AI Commerce Capabilities"]}),e.jsxs("div",{className:"mt-4 grid gap-4 sm:grid-cols-3 text-sm",children:[e.jsxs("div",{children:[e.jsx("h4",{className:"font-medium text-ink",children:"Content Generation"}),e.jsx("p",{className:"text-xs text-muted mt-1",children:"Product titles, descriptions, specifications, FAQs, buying guides, comparison tables, schema markup"})]}),e.jsxs("div",{children:[e.jsx("h4",{className:"font-medium text-ink",children:"SEO Optimization"}),e.jsx("p",{className:"text-xs text-muted mt-1",children:"Meta titles, meta descriptions, product tags, alt text, structured data, canonical URLs"})]}),e.jsxs("div",{children:[e.jsx("h4",{className:"font-medium text-ink",children:"Intelligence"}),e.jsx("p",{className:"text-xs text-muted mt-1",children:"Supplier recommendations, pricing suggestions, inventory forecasting, sales predictions, trend analysis"})]})]})]})]})]})}export{G as default};

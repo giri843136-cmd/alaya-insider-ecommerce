@@ -1,0 +1,1 @@
+import{j as o}from"./vendor-react-BFP5WcJ4.js";import r from"./ErrorPage-B5_c1qBK.js";import"./index-cI_eaD76.js";import"./vendor-icons-DNgWBI8n.js";import"./ProductCard-DHzdrPZj.js";import"./Reveal-BuV8Ol0Z.js";function s(){return o.jsx(r,{code:"404"})}export{s as default};

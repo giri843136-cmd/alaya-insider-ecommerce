@@ -341,11 +341,20 @@ export default function AdminLogin() {
                     <p className="text-xs text-muted">Enter the 6-digit code from your authenticator app (Google Authenticator, Authy, etc.)</p>
                   </div>
                 ) : (
-                  <div className="space-y-2 rounded-xl bg-surface2 p-4 text-center">
+                  <div className="space-y-3 rounded-xl bg-surface2 p-4 text-center">
                     <Smartphone className="mx-auto h-6 w-6 text-accent" />
-                    <p className="text-sm text-ink">Verification code sent to:</p>
-                    <p className="text-sm font-medium text-ink">{otpSentTo.phone}</p>
-                    <p className="text-xs text-muted">Enter the 6-digit code sent to your mobile number.</p>
+                    <p className="text-sm text-ink">Verification code sent to both channels:</p>
+                    <div className="space-y-1">
+                      <p className="flex items-center justify-center gap-2 text-sm font-medium text-ink">
+                        <AtSign className="h-3.5 w-3.5 text-muted" />
+                        <span>{otpSentTo.email}</span>
+                      </p>
+                      <p className="flex items-center justify-center gap-2 text-sm font-medium text-ink">
+                        <Smartphone className="h-3.5 w-3.5 text-muted" />
+                        <span>{otpSentTo.phone}</span>
+                      </p>
+                    </div>
+                    <p className="text-xs text-muted">Enter the 6-digit code from your email or mobile.</p>
                   </div>
                 )}
 

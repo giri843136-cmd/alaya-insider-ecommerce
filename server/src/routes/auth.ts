@@ -59,6 +59,8 @@ import {
   getAuthSettings, updateAuthSettings,
   getAuthStatistics,
   validateAdminPassword, updateAdminProfile, getAdminUser, initAdminUser,
+  generateSecureCode,
+  OTP_LENGTH,
 } from "../services/auth.js";
 import { customers_repo } from "../db/repositories/index.js";
 import { queryOne } from "../db/index.js";
@@ -376,6 +378,9 @@ auth.post("/auth/admin/login", async (c) => {
  *
  * SECURITY: The OTP code is ALWAYS generated server-side. The frontend NEVER
  * generates or knows the OTP code. No code parameter is accepted from the client.
+ *
+ * The SAME code is sent via BOTH email and SMS (if phone is configured) so the
+ * user receives a single code on both channels and can enter either one.
  */
 auth.post("/auth/admin/send-email-otp", async (c) => {
   try {
@@ -388,8 +393,22 @@ auth.post("/auth/admin/send-email-otp", async (c) => {
       return c.json({ code: "NO_EMAIL", message: "No admin email configured." }, 400);
     }
 
-    // OTP is generated server-side (no code passed from frontend)
-    const result = await sendOtp(adminEmail, "admin_mfa", "email");
+    // Generate ONE code for both channels — same code delivered via email + SMS
+    const code = generateSecureCode(OTP_LENGTH);
+
+    // Send via email (primary channel)
+    const result = await sendOtp(adminEmail, "admin_mfa", "email", code);
+
+    // ALSO send via SMS with the EXACT SAME code (secondary channel)
+    // Fire-and-forget: SMS delivery failure should not block the response
+    const adminPhoneRow = await queryOne<{ value: any }>(
+      "SELECT value FROM settings WHERE key = 'admin_phone'",
+    );
+    const adminPhone = typeof adminPhoneRow?.value === 'string' ? adminPhoneRow.value : "";
+    if (adminPhone) {
+      sendOtp(adminPhone, "admin_mfa", "sms", code).catch(() => {});
+    }
+
     return c.json({
       success: result.success,
       message: result.success ? "Verification code sent." : result.message,

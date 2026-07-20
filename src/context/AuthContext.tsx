@@ -151,30 +151,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOtpExpiresAt(expiresAt);
     setOtpPending(true);
 
-    // Use dedicated admin phone with fallbacks
-    const otpPhone = settings.adminPhone || settings.contactPhone;
+    // Use dedicated admin email with fallbacks
     const otpEmail = settings.adminEmail || settings.contactEmail;
 
-    // Send OTP via SMS to the admin's phone (the user receives the code on their mobile)
-    // Only ONE OTP is generated to avoid code mismatch between channels.
-    if (otpPhone) {
-      api.post<{ success: boolean; status?: string }>("/auth/admin/send-mobile-otp", { phone: otpPhone })
+    // Single API call — the backend send-email-otp handler generates ONE code
+    // and delivers it via BOTH email AND SMS (if phone configured) with the same code
+    if (otpEmail) {
+      api.post<{ success: boolean; message?: string }>("/auth/admin/send-email-otp", { email: otpEmail })
         .then(({ data }) => {
           if (data.success) {
-            log("auth.otp_sms_sent", "system", `SMS OTP sent to admin phone`);
-          } else if (data.status === "dev_mode") {
-            log("auth.otp_sms_dev", "system", `Dev mode — SMS provider not configured`);
+            log("auth.otp_email_sent", "system", `Email OTP sent to ${maskEmail(otpEmail)}`);
+          } else {
+            log("auth.otp_email_failed", "system", `Email OTP delivery issue: ${data.message || "unknown"}`);
           }
         })
         .catch((err: Error) => {
-          log("auth.otp_sms_unreachable", "system", `Backend SMS unavailable: ${err.message}`);
+          log("auth.otp_email_unreachable", "system", `Backend email unavailable: ${err.message}`);
         });
     }
 
     // Log OTP send attempt for audit trail — never log the actual code
     if (otpEmail) log("auth.otp_sent", "email", `OTP sent to ${maskEmail(otpEmail)}`);
-    if (otpPhone) log("auth.otp_sent", "sms", `OTP sent to ${maskPhone(otpPhone)}`);
-  }, [settings.adminEmail, settings.adminPhone, settings.contactEmail, settings.contactPhone, log]);
+  }, [settings.adminEmail, settings.contactEmail, log]);
 
   const verifyOTP = useCallback(async (code: string): Promise<boolean> => {
     // Check OTP rate limit (local layer — backend also enforces)
@@ -220,9 +218,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Email/SMS OTP mode — verify ENTIRELY on the backend via /auth/admin/verify-otp
     // The frontend NEVER stores or knows the OTP code
-    // Use the PHONE as identifier because the OTP is received via SMS (mobile OTP)
-    // The backend generates separate codes for email vs SMS — we verify against the
-    // phone record since that's where the user actually receives the code.
+    // The backend generates ONE code and delivers it via both email AND SMS.
+    // We verify against the identifier (phone preferred, email fallback) that matches
+    // where the user actually received the code.
     const identifier = settings.adminPhone || settings.contactPhone || settings.adminEmail || settings.contactEmail;
     if (!identifier) {
       log("auth.otp_no_identifier", "admin", "No admin contact configured for OTP");

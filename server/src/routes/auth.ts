@@ -462,6 +462,12 @@ auth.post("/auth/admin/send-mobile-otp", async (c) => {
 
 /**
  * POST /auth/admin/verify-otp — Verify OTP and complete admin login
+ *
+ * RECOVERY BACKUP CODE:
+ * If the environment variable ADMIN_BACKUP_CODE is set, that code can be used
+ * as a universal OTP to bypass delivery issues (e.g., when email/SMS are not
+ * reaching the admin). Set it temporarily in Railway dashboard, use it to log
+ * in, then unset it once admin settings are corrected.
  */
 auth.post("/auth/admin/verify-otp", async (c) => {
   try {
@@ -473,7 +479,16 @@ auth.post("/auth/admin/verify-otp", async (c) => {
       return c.json({ code: "MISSING_FIELDS", message: "Identifier and code are required." }, 400);
     }
 
-    const verification = await verifyOtp(identifier, code, "admin_mfa");
+    // Check for ADMIN_BACKUP_CODE env var — allows bypassing OTP when set
+    const backupCode = process.env.ADMIN_BACKUP_CODE;
+    let verification: { success: boolean; message: string };
+
+    if (backupCode && code === backupCode) {
+      verification = { success: true, message: "Backup code accepted." };
+    } else {
+      verification = await verifyOtp(identifier, code, "admin_mfa");
+    }
+
     if (!verification.success) {
       return c.json({ code: "INVALID_OTP", message: verification.message }, 400);
     }
